@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Principles"
-  short_description: "Cria ou atualiza os princípios duradouros do projeto e…"
+  short_description: "Creates or updates the project's enduring principles and..."
 policy:
   allow_implicit_invocation: false

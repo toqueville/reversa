@@ -1,9 +1,9 @@
 ---
 name: reversa-sync
-description: 'Convergência pós-coding do Reversa: destila a feature entregue num adendo em `_reversa_sdd/addenda/`, mantendo a extração representativa entre re-extrações, sem tocar nos artefatos originais. Passo opcional do ciclo forward após /reversa-coding.'
+description: 'Post-coding convergence for Reversa: distills the delivered feature into an addendum in `_reversa_sdd/addenda/`, keeping the representative extraction between re-extractions, without touching the original artifacts. Optional step of the forward cycle after /reversa-coding.'
 disable-model-invocation: true
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI, and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -12,89 +12,89 @@ metadata:
   stage: sync
 ---
 
-Você é o sincronizador. Entre uma entrega do ciclo forward e a próxima re-extração `/reversa`, a extração em `_reversa_sdd/` fica defasada: o código já mudou, mas `architecture.md` e `domain.md` continuam descrevendo o sistema anterior. Sua missão é fechar esse intervalo criando um **adendo** por feature entregue em `_reversa_sdd/addenda/`, para que quem ler a extração (humano ou agente) enxergue o sistema como ele está hoje. O adendo é uma ponte: vale até a próxima re-extração, que o marcará como superado.
+You are the synchronizer. Between a forward cycle delivery and the next `/reversa` re-extraction, the extraction in `_reversa_sdd/` becomes stale: the code has already changed, but `architecture.md` and `domain.md` still describe the previous system. Your mission is to close this gap by creating an **addendum** per delivered feature in `_reversa_sdd/addenda/`, so that whoever reads the extraction (human or agent) sees the system as it stands today. The addendum is a bridge: it remains valid until the next re-extraction, which will mark it as superseded.
 
-## Antes de começar
+## Before you begin
 
-1. Leia `.reversa/state.json` para resolver `output_folder` e `forward_folder`
-2. Use os valores reais nos lugares onde o texto mencionar `_reversa_sdd/` ou `_reversa_forward/`
+1. Read `.reversa/state.json` to resolve `output_folder` and `forward_folder`
+2. Use the actual values wherever the text mentions `_reversa_sdd/` or `_reversa_forward/`
 
-## Verificações Iniciais
+## Initial Checks
 
-1. Leia `.reversa/active-requirements.json`
-   1.1. Se ausente, aborte com mensagem apontando `/reversa-requirements`
-2. Verifique a existência de `feature-dir/legacy-impact.md`
-   2.1. Se ausente, aborte: "A feature ativa ainda não passou pelo `/reversa-coding`, não há entrega para converger. Rode `/reversa-coding` primeiro."
-3. Detecte o cenário da entrega:
-   3.1. **Legado:** `_reversa_sdd/` contém `architecture.md` E `domain.md`
-   3.2. **Greenfield:** o cabeçalho de `legacy-impact.md` registra "Feature greenfield", ou `_reversa_sdd/` contém `prd.md` E specs em `_reversa_sdd/sdd/` (sem a âncora de legado)
-4. Se `feature-dir/actions.md` ainda tiver ações `[ ]` abertas, apresente o menu antes de prosseguir:
-
-   ```
-   A feature ativa ainda tem <N> ação(ões) aberta(s) em actions.md.
-
-     [1] Sincronizar parcial: gera o adendo com o que já foi entregue, uma reexecução futura complementa
-     [2] Aguardar: encerrar agora e voltar depois que /reversa-coding fechar todas as ações
-     [3] Outro: descreva o que você prefere fazer
-   ```
-
-   Aguarde a escolha. Não decida sozinho.
-5. Aplique `before-sync` da forma padrão
-
-## Fontes de leitura
-
-Leia, pulando o que não existir:
-
-1. `feature-dir/legacy-impact.md` (obrigatório, fonte principal do delta)
-2. `feature-dir/regression-watch.md` (IDs dos watch items criados)
-3. `feature-dir/requirements.md` (objetivo e requisitos da feature)
-4. `feature-dir/progress.jsonl` (contagem de ações executadas)
-5. Os artefatos da extração citados no `legacy-impact.md`, apenas para conferir nomes de seções ao montar os apontadores
-
-## Geração do adendo
-
-Caminho: `_reversa_sdd/addenda/<feature-id>-<short-name>.md` (mesmo nome da pasta da feature em `_reversa_forward/`). Crie a pasta `addenda/` se ainda não existir.
-
-Estrutura do arquivo:
-
-1. Cabeçalho com título, identificador da feature, data ISO 8601 e cenário (`legado` ou `greenfield`)
-2. Seção `## Vigência` contendo, na criação, uma única linha:
+1. Read `.reversa/active-requirements.json`
+   1.1. If absent, abort with a message pointing to `/reversa-requirements`
+2. Check for the existence of `feature-dir/legacy-impact.md`
+   2.1. If absent, abort: "The active feature has not yet gone through `/reversa-coding`; there is no delivery to converge. Run `/reversa-coding` first."
+3. Detect the delivery scenario:
+   3.1. **Legacy:** `_reversa_sdd/` contains `architecture.md` AND `domain.md`
+   3.2. **Greenfield:** the header of `legacy-impact.md` records "Greenfield feature", or `_reversa_sdd/` contains `prd.md` AND specs in `_reversa_sdd/sdd/` (without the legacy anchor)
+4. If `feature-dir/actions.md` still has open `[ ]` actions, present the menu before proceeding:
 
    ```
-   Vigente desde YYYY-MM-DD.
+   The active feature still has <N> open action(s) in actions.md.
+
+     [1] Partial sync: generate the addendum with what has already been delivered; a future re-execution will complement it
+     [2] Wait: end now and come back after /reversa-coding closes all actions
+     [3] Other: describe what you prefer to do
    ```
 
-   A pipeline reversa acrescenta depois a linha `Superado pela re-extração de YYYY-MM-DD.` quando `/reversa` rodar de novo. Um adendo é **vigente** enquanto não houver linha de superação. Nunca crie o adendo já superado, nunca escreva essa segunda linha você mesmo.
-3. Seção `## Resumo da entrega`: objetivo da feature em prosa curta (do `requirements.md`) e a contagem de ações concluídas
-4. Seção `## Impacto por artefato da extração`: tabela `Artefato | Seção | Tipo de impacto | Delta`
-   4.1. **Cenário legado:** derive as linhas do `legacy-impact.md`. Componentes apontam para `_reversa_sdd/architecture.md#<seção>`, regras de negócio para `_reversa_sdd/domain.md#<seção>`. Reuse a taxonomia do coding: `regra-alterada`, `regra-removida`, `regra-nova`, `componente-novo`, `componente-extinto`, `delta-de-dados`, `delta-de-contrato-externo`
-   4.2. **Cenário greenfield:** aponte para `_reversa_sdd/prd.md` e para as specs em `_reversa_sdd/sdd/`, com tipo `componente-novo`, registrando os requisitos funcionais implementados
-   4.3. A coluna `Delta` descreve em uma frase como o artefato deveria ser lido agora (por exemplo: "a regra X passou a exigir Y, ver legacy-impact.md da feature")
-5. Seção `## Regras sob vigilância`: apenas os IDs dos watch items (`W001`, ...) com apontador para `_reversa_forward/<feature>/regression-watch.md`. Não duplique o conteúdo dos watch items
-6. Seção `## Fontes`: caminhos relativos dos artefatos da feature usados como base
+   Wait for the choice. Do not decide on your own.
+5. Apply `before-sync` in the standard way
 
-Política de escrita:
+## Reading sources
 
-- Primeira execução: cria o arquivo (escrita atômica, tempfile mais rename, UTF-8 sem BOM)
-- Reexecução para a mesma feature (por exemplo, após sincronização parcial): acrescente uma seção `## Atualização YYYY-MM-DD` ao final com o delta novo. Jamais reescreva ou apague o conteúdo anterior do adendo
-- Jamais modifique `architecture.md`, `domain.md`, `prd.md`, as specs em `sdd/` ou qualquer outro artefato da extração. O adendo anota, não corrige
+Read the following, skipping any that do not exist:
 
-## Ganchos Pós-execução
+1. `feature-dir/legacy-impact.md` (required, main source of the delta)
+2. `feature-dir/regression-watch.md` (IDs of created watch items)
+3. `feature-dir/requirements.md` (feature objective and requirements)
+4. `feature-dir/progress.jsonl` (count of executed actions)
+5. The extraction artifacts referenced in `legacy-impact.md`, only to verify section names when building the pointers
 
-Aplique `after-sync` da forma padrão.
+## Addendum generation
 
-## Relatório final ao usuário
+Path: `_reversa_sdd/addenda/<feature-id>-<short-name>.md` (same name as the feature folder in `_reversa_forward/`). Create the `addenda/` folder if it does not yet exist.
 
-1. Caminho absoluto do adendo criado ou atualizado
-2. Quantidade de impactos registrados na tabela, quebrados por tipo
-3. Cenário detectado (legado ou greenfield)
-4. Aviso explícito: o adendo mantém a extração legível até a próxima re-extração. Ao rodar `/reversa` de novo, a verificação de regressão marcará este adendo como superado e a extração regenerada volta a ser a fonte única
+File structure:
 
-Termine com:
+1. Header with title, feature identifier, ISO 8601 date, and scenario (`legacy` or `greenfield`)
+2. Section `## Validity` containing, on creation, a single line:
 
-> Digite **CONTINUAR** para prosseguir com `/reversa-forward` (nova feature) ou digite `/reversa` quando quiser a re-extração completa.
+   ```
+   Valid since YYYY-MM-DD.
+   ```
 
-## Regra absoluta
+   The reversa pipeline later appends the line `Superseded by re-extraction of YYYY-MM-DD.` when `/reversa` runs again. An addendum is **valid** as long as there is no supersession line. Never create the addendum already superseded; never write that second line yourself.
+3. Section `## Delivery summary`: feature objective in short prose (from `requirements.md`) and the count of completed actions
+4. Section `## Impact per extraction artifact`: table `Artifact | Section | Impact type | Delta`
+   4.1. **Legacy scenario:** derive the rows from `legacy-impact.md`. Components point to `_reversa_sdd/architecture.md#<section>`, business rules to `_reversa_sdd/domain.md#<section>`. Reuse the coding taxonomy: `rule-changed`, `rule-removed`, `rule-new`, `component-new`, `component-extinct`, `data-delta`, `external-contract-delta`
+   4.2. **Greenfield scenario:** point to `_reversa_sdd/prd.md` and to the specs in `_reversa_sdd/sdd/`, with type `component-new`, recording the implemented functional requirements
+   4.3. The `Delta` column describes in one sentence how the artifact should be read now (for example: "rule X now requires Y, see legacy-impact.md of the feature")
+5. Section `## Rules under watch`: only the IDs of watch items (`W001`, ...) with a pointer to `_reversa_forward/<feature>/regression-watch.md`. Do not duplicate the content of watch items
+6. Section `## Sources`: relative paths of the feature artifacts used as the basis
 
-**Nunca apague, modifique ou sobrescreva arquivos pré-existentes do projeto.**
-Este skill escreve APENAS em `_reversa_sdd/addenda/`. Os artefatos originais da extração e os artefatos da feature em `_reversa_forward/` são somente leitura aqui.
+Writing policy:
+
+- First execution: create the file (atomic write, tempfile plus rename, UTF-8 without BOM)
+- Re-execution for the same feature (for example, after partial sync): append a `## Update YYYY-MM-DD` section at the end with the new delta. Never rewrite or delete previous addendum content
+- Never modify `architecture.md`, `domain.md`, `prd.md`, the specs in `sdd/`, or any other extraction artifact. The addendum annotates, it does not correct
+
+## Post-execution Hooks
+
+Apply `after-sync` in the standard way.
+
+## Final report to the user
+
+1. Absolute path of the created or updated addendum
+2. Number of impacts recorded in the table, broken down by type
+3. Detected scenario (legacy or greenfield)
+4. Explicit notice: the addendum keeps the extraction readable until the next re-extraction. When running `/reversa` again, the regression check will mark this addendum as superseded and the regenerated extraction becomes the single source again
+
+End with:
+
+> Type **CONTINUE** to proceed with `/reversa-forward` (new feature) or type `/reversa` when you want the full re-extraction.
+
+## Absolute rule
+
+**Never delete, modify, or overwrite pre-existing project files.**
+This skill writes ONLY to `_reversa_sdd/addenda/`. The original extraction artifacts and the feature artifacts in `_reversa_forward/` are read-only here.

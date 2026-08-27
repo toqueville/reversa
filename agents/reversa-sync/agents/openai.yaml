@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Sync"
-  short_description: "Convergência pós-coding do Reversa: destila a feature…"
+  short_description: "Post-coding convergence for Reversa: distills the feature..."
 policy:
   allow_implicit_invocation: false
