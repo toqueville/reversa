@@ -1,8 +1,8 @@
 ---
 name: reversa-agents-help
-description: Explica com analogias o que cada agente do Reversa faz e quando usá-lo. Ative com /reversa-agents-help.
+description: Explains with analogies what each Reversa agent does and when to use it. Activate with /reversa-agents-help.
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI, and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -10,169 +10,169 @@ metadata:
   role: help
 ---
 
-Apresente exatamente o texto abaixo, sem alterações, sem resumir.
+Present exactly the text below, without changes, without summarizing.
 
 ---
 
-# Agentes do Reversa — guia com analogias
+# Reversa Agents -- guide with analogies
 
-O Reversa é um time de especialistas. Cada agente faz uma coisa só — e faz bem.
+Reversa is a team of specialists. Each agent does one thing only -- and does it well.
 
 ---
 
-## Menu principal
+## Main menu
 
-| O que você quer fazer? | Comando | Time |
+| What do you want to do? | Command | Team |
 |---|---|---|
-| Descobrir e documentar um sistema legado | `/reversa` | Reversa Agents Core |
-| Clarear a ideia antes de qualquer código | `/reversa-brainstorm` | Ideation Agents |
-| Criar um projeto novo a partir de uma ideia | `/reversa-new` | Code New Project Agents |
-| Implementar ou evoluir código a partir das specs | `/reversa-forward` | Code Forward Agents |
-| Planejar a migração de um legado | `/reversa-migrate` | Migration Agents |
-| Gerar um mini-site visual da documentação | `/reversa-docs` | Documentation Agents |
-| Entender qual agente usar | `/reversa-agents-help` | Guia de agentes |
+| Discover and document a legacy system | `/reversa` | Reversa Agents Core |
+| Clarify the idea before any code | `/reversa-brainstorm` | Ideation Agents |
+| Create a new project from an idea | `/reversa-new` | Code New Project Agents |
+| Implement or evolve code from specs | `/reversa-forward` | Code Forward Agents |
+| Plan the migration of a legacy system | `/reversa-migrate` | Migration Agents |
+| Generate a visual mini-site of the documentation | `/reversa-docs` | Documentation Agents |
+| Understand which agent to use | `/reversa-agents-help` | Agent guide |
 
-Os times de Pricing e Translators têm comandos especializados. Use `/reversa-pricing-profile`, `/reversa-pricing-size`, `/reversa-pricing-estimate` ou `/reversa-n8n` conforme a necessidade.
+The Pricing and Translators teams have specialized commands. Use `/reversa-pricing-profile`, `/reversa-pricing-size`, `/reversa-pricing-estimate`, or `/reversa-n8n` as needed.
 
 ---
 
-## 💡 Reversa Brainstorm, a mesa antes da obra
-**Comando:** `/reversa-brainstorm`
+## :bulb: Reversa Brainstorm, the table before the construction
+**Command:** `/reversa-brainstorm`
 
-Antes de o pedreiro levantar parede, alguém senta na mesa e pergunta o que se quer com a casa: para quem é, o que dói morar como está hoje, quais os caminhos possíveis, o que pode dar errado. Ninguém desenha planta nessa mesa. Só se decide o que vale construir.
+Before the bricklayer raises a wall, someone sits at the table and asks what is wanted from the house: who is it for, what hurts about living as things are today, what the possible paths are, what could go wrong. Nobody draws blueprints at this table. Only what is worth building gets decided.
 
-> Use o Reversa Brainstorm quando a ideia ainda está bruta, em projeto novo ou em legado. Ele conduz `Framer → Explorer → Challenger → Arbiter → Pre-Spec` e entrega o resultado ao `/reversa-new` (greenfield) ou ao `/reversa-requirements` (legado).
+> Use Reversa Brainstorm when the idea is still raw, whether for a new project or a legacy system. It runs `Framer -> Explorer -> Challenger -> Arbiter -> Pre-Spec` and delivers the result to `/reversa-new` (greenfield) or `/reversa-requirements` (legacy).
 
-**Os cinco da mesa:**
+**The five at the table:**
 
-| Agente | Analogia | Comando |
+| Agent | Analogy | Command |
 |---|---|---|
-| **Framer** | O médico que não aceita "quero remédio X" e pergunta onde dói | `/reversa-framer` |
-| **Explorer** | O guia que mostra todas as trilhas, inclusive a de não subir a montanha | `/reversa-explorer` |
-| **Challenger** | O advogado do diabo que já viu esse projeto fracassar antes | `/reversa-challenger` |
-| **Arbiter** | O juiz que dá o veredito e assume o que se perde com ele, mas quem decide é você | `/reversa-arbiter` |
-| **Pre-Spec** | O escrivão que entrega o mínimo para a obra começar, e nada além | `/reversa-pre-spec` |
+| **Framer** | The doctor who does not accept "I want drug X" and asks where it hurts | `/reversa-framer` |
+| **Explorer** | The guide who shows all the trails, including the one of not climbing the mountain | `/reversa-explorer` |
+| **Challenger** | The devil's advocate who has already seen this project fail before | `/reversa-challenger` |
+| **Arbiter** | The judge who gives the verdict and owns what is lost with it, but you are the one who decides | `/reversa-arbiter` |
+| **Pre-Spec** | The clerk who delivers the minimum for the construction to start, and nothing beyond | `/reversa-pre-spec` |
 
 ---
 
-## 🆕 Reversa New — o fundador de produto
-**Comando:** `/reversa-new`
+## :new: Reversa New -- the product founder
+**Command:** `/reversa-new`
 
-O fundador começa com uma ideia ainda bruta, investiga o problema, entende para quem o produto existe, consolida um PRD e transforma tudo em especificações prontas para implementação.
+The founder starts with a still-raw idea, investigates the problem, understands who the product exists for, consolidates a PRD, and transforms everything into specs ready for implementation.
 
-> Use o Reversa New para projetos greenfield. Ele conduz `Ideator → Researcher → Drafter → Spec SDD` e entrega o resultado ao `/reversa-forward`.
-
----
-
-## 🎼 Reversa — orquestrador central
-**Comando:** `/reversa`
-
-Um regente de orquestra não toca nenhum instrumento. Ele conhece a partitura inteira e diz quem entra quando, em que ordem, em que ritmo. Sem ele, cada músico tocaria sua parte sem se conectar com os outros.
-
-> Use o Reversa para iniciar ou retomar a análise completa. Ele cuida da sequência por você.
+> Use Reversa New for greenfield projects. It runs `Ideator -> Researcher -> Drafter -> Spec SDD` and delivers the result to `/reversa-forward`.
 
 ---
 
-## 🗺️ Scout — o corretor de imóveis
-**Comando:** `/reversa-scout`
+## :musical_score: Reversa -- central orchestrator
+**Command:** `/reversa`
 
-O corretor faz o primeiro tour no imóvel. Não abre gavetas, não lê documentos, não mexe em nada. Só mapeia: quantos cômodos, qual o bairro, que instalações existem, qual o estado geral.
+An orchestra conductor does not play any instrument. He knows the entire score and says who enters when, in what order, at what tempo. Without him, each musician would play their part without connecting with the others.
 
-> Use o Scout no começo. Ele gera o inventário do projeto — linguagens, frameworks, módulos, dependências — sem entrar no código.
-
----
-
-## 🧬 Soul Extractor: o biógrafo expresso
-**Comando:** `/reversa-extract-soul`
-
-O biógrafo expresso visita o personagem, lê as anotações do corretor (Scout), folheia rapidamente alguns álbuns de família e o histórico de cartas (git log), e produz uma biografia de uma página: quem é, o que faz, e as decisões fundadoras que moldaram a vida toda. Não é a história completa, é a alma destilada.
-
-> Use o Soul Extractor logo após o Scout, quando quiser uma síntese executiva do sistema (propósito, entidades centrais e decisões fundadoras) numa única Spec, sem esperar todo o pipeline. Não substitui Archaeologist nem Detective.
+> Use Reversa to start or resume the complete analysis. It handles the sequence for you.
 
 ---
 
-## ⛏️ Archaeologist — o escavador
-**Comando:** `/reversa-archaeologist`
+## :world_map: Scout -- the real estate agent
+**Command:** `/reversa-scout`
 
-O arqueólogo escava o terreno com paciência, camada por camada. Cataloga cada artefato encontrado: tamanho, material, localização, forma. Ele não interpreta a civilização, só descreve com precisão o que está lá.
+The agent does the first tour of the property. Does not open drawers, does not read documents, does not touch anything. Only maps: how many rooms, what neighborhood, what installations exist, what the general condition is.
 
-> Use o Archaeologist para analisar o código módulo a módulo. Ele extrai funções, algoritmos, estruturas de dados e fluxos de controle. **Roda um módulo por sessão** para economizar tokens.
-
----
-
-## 🔍 Detective — o Sherlock Holmes
-**Comando:** `/reversa-detective`
-
-Sherlock Holmes chega depois do arqueólogo. Olha para os artefatos catalogados e pergunta: *"Mas por que isso está aqui? Quem colocou? O que isso revela sobre quem viveu aqui?"* Ele não escava. Ele interpreta.
-
-> Use o Detective após o Archaeologist. Ele extrai regras de negócio implícitas, lê o histórico git como um diário e reconstrói decisões que ninguém documentou.
+> Use the Scout at the beginning. It generates the project inventory -- languages, frameworks, modules, dependencies -- without going into the code.
 
 ---
 
-## 📐 Architect — o cartógrafo
-**Comando:** `/reversa-architect`
+## :dna: Soul Extractor: the express biographer
+**Command:** `/reversa-extract-soul`
 
-O cartógrafo visita um território e produz mapas formais: planta baixa, mapa de elevação, planta estrutural. Alguém que nunca pisou lá consegue entender tudo olhando para os mapas.
+The express biographer visits the character, reads the agent's notes (Scout), quickly flips through some family albums and the letter history (git log), and produces a one-page biography: who they are, what they do, and the founding decisions that shaped their entire life. It is not the complete story, it is the distilled soul.
 
-> Use o Architect após o Detective. Ele sintetiza tudo em diagramas C4, ERD completo e mapa de integrações.
-
----
-
-## 📝 Writer — o tabelião
-**Comando:** `/reversa-writer`
-
-O tabelião transforma o que foi descoberto em contratos formais, precisos e rastreáveis. Cada cláusula tem grau de certeza declarado. O documento vale como contrato: um agente de IA pode reimplementar o sistema a partir dele.
-
-> Use o Writer após o Architect. Ele gera as specs SDD, OpenAPI e user stories com rastreabilidade de código.
+> Use the Soul Extractor right after the Scout, when you want an executive synthesis of the system (purpose, core entities, and founding decisions) in a single Spec, without waiting for the entire pipeline. It does not replace Archaeologist or Detective.
 
 ---
 
-## ⚖️ Reviewer — o revisor de specs
-**Comando:** `/reversa-reviewer`
+## :pick: Archaeologist -- the excavator
+**Command:** `/reversa-archaeologist`
 
-O Reviewer pega os contratos do Writer e tenta furar: *"Isso é contradição. Esse ponto não tem prova. Essa regra some se o usuário fizer X."* Ele não quer destruir, quer garantir que o que ficou de pé seja sólido.
+The archaeologist excavates the terrain patiently, layer by layer. Catalogs each artifact found: size, material, location, shape. He does not interpret the civilization, only describes with precision what is there.
 
-> Use o Reviewer após o Writer. Ele revisa criticamente as specs, reclassifica confiança e levanta perguntas para validação humana.
-
----
-
-## 🖼️ Visor — o ilustrador forense
-**Comando:** `/reversa-visor`
-
-O ilustrador forense trabalha só com imagens. Recebe screenshots do sistema e reconstrói fielmente a interface: telas, formulários, fluxos de navegação. Não precisa que o sistema esteja rodando — só das fotos.
-
-> Use o Visor quando tiver screenshots disponíveis. Ele documenta a UI sem precisar de acesso ao sistema.
+> Use the Archaeologist to analyze the code module by module. It extracts functions, algorithms, data structures, and control flows. **Runs one module per session** to save tokens.
 
 ---
 
-## 🗄️ Data Master — o geólogo
-**Comando:** `/reversa-data-master`
+## :mag: Detective -- the Sherlock Holmes
+**Command:** `/reversa-detective`
 
-O geólogo mapeia o subsolo — a camada que ninguém vê mas que sustenta tudo. Tabelas, relacionamentos, constraints, triggers, procedures. A fundação invisível sobre a qual a aplicação está construída.
+Sherlock Holmes arrives after the archaeologist. Looks at the cataloged artifacts and asks: *"But why is this here? Who placed it? What does this reveal about who lived here?"* He does not excavate. He interprets.
 
-> Use o Data Master quando houver DDL, migrations ou modelos ORM disponíveis. Ele documenta o banco completamente.
-
----
-
-## 🎨 Design System — o estilista
-**Comando:** `/reversa-design-system`
-
-O estilista cataloga o guarda-roupa: paleta de cores, tipografia, espaçamentos, tokens de design. As "regras de moda" que governam a aparência do sistema — o que pode e o que não pode ser combinado.
-
-> Use o Design System quando houver arquivos CSS, temas ou screenshots de interface. Ele extrai os tokens visuais do projeto.
+> Use the Detective after the Archaeologist. It extracts implicit business rules, reads the git history as a diary, and reconstructs decisions that nobody documented.
 
 ---
 
-## Sequência recomendada
+## :triangular_ruler: Architect -- the cartographer
+**Command:** `/reversa-architect`
+
+The cartographer visits a territory and produces formal maps: floor plan, elevation map, structural plan. Someone who never set foot there can understand everything by looking at the maps.
+
+> Use the Architect after the Detective. It synthesizes everything into C4 diagrams, complete ERD, and integration map.
+
+---
+
+## :memo: Writer -- the notary
+**Command:** `/reversa-writer`
+
+The notary transforms what was discovered into formal, precise, and traceable contracts. Each clause has a declared confidence level. The document serves as a contract: an AI agent can reimplement the system from it.
+
+> Use the Writer after the Architect. It generates the SDD specs, OpenAPI, and user stories with code traceability.
+
+---
+
+## :balance_scale: Reviewer -- the spec reviewer
+**Command:** `/reversa-reviewer`
+
+The Reviewer takes the Writer's contracts and tries to poke holes: *"This is a contradiction. This point has no proof. This rule breaks if the user does X."* He does not want to destroy, he wants to ensure that what stood is solid.
+
+> Use the Reviewer after the Writer. It critically reviews the specs, reclassifies confidence, and raises questions for human validation.
+
+---
+
+## :framed_picture: Visor -- the forensic illustrator
+**Command:** `/reversa-visor`
+
+The forensic illustrator works only with images. Receives screenshots of the system and faithfully reconstructs the interface: screens, forms, navigation flows. Does not need the system running -- just the photos.
+
+> Use the Visor when you have screenshots available. It documents the UI without needing access to the system.
+
+---
+
+## :file_cabinet: Data Master -- the geologist
+**Command:** `/reversa-data-master`
+
+The geologist maps the subsoil -- the layer nobody sees but that supports everything. Tables, relationships, constraints, triggers, procedures. The invisible foundation on which the application is built.
+
+> Use the Data Master when there is DDL, migrations, or ORM models available. It documents the database completely.
+
+---
+
+## :art: Design System -- the stylist
+**Command:** `/reversa-design-system`
+
+The stylist catalogs the wardrobe: color palette, typography, spacing, design tokens. The "fashion rules" that govern the system's appearance -- what can and cannot be combined.
+
+> Use the Design System when there are CSS files, themes, or UI screenshots. It extracts the project's visual tokens.
+
+---
+
+## Recommended sequence
 
 ```
-Projeto legado: /reversa → descoberta e especificações
-Projeto novo:   /reversa-new → PRD e specs → /reversa-forward
-Migração:       /reversa → /reversa-migrate → /reversa-forward
+Legacy project: /reversa -> discovery and specifications
+New project:    /reversa-new -> PRD and specs -> /reversa-forward
+Migration:      /reversa -> /reversa-migrate -> /reversa-forward
 
-Pipeline legado manual:
-Scout → Archaeologist (N sessões) → Detective → Architect → Writer → Reviewer
+Manual legacy pipeline:
+Scout -> Archaeologist (N sessions) -> Detective -> Architect -> Writer -> Reviewer
 
-Opcionais em qualquer fase:
-Soul Extractor · Visor · Data Master · Design System · Reversa Docs
+Optional at any phase:
+Soul Extractor . Visor . Data Master . Design System . Reversa Docs
 ```
