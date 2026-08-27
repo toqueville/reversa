@@ -1,24 +1,24 @@
-# Guia de Checkpoints — .reversa/state.json
+# Checkpoint Guide — .reversa/state.json
 
-O Reversa é o único agente que **escreve** no state.json. Os demais agentes apenas leem.
+Reversa is the only agent that **writes** to state.json. All other agents only read.
 
-## Regras absolutas
+## Absolute rules
 
-1. **Nunca remova campos existentes.** Apenas adicione ou atualize.
-2. **Sempre leia o arquivo antes de escrever** — outro agente pode ter atualizado `checkpoints`.
-3. **Salve após cada fase concluída**, não apenas no final.
-4. **Em caso de estouro de contexto**, salve imediatamente antes de pausar.
+1. **Never remove existing fields.** Only add or update.
+2. **Always read the file before writing** — another agent may have updated `checkpoints`.
+3. **Save after each completed phase**, not only at the end.
+4. **In case of context overflow**, save immediately before pausing.
 
-## O que salvar a cada fase
+## What to save at each phase
 
-### Ao iniciar uma fase
+### When starting a phase
 ```json
 {
   "phase": "reconhecimento"
 }
 ```
 
-### Ao concluir um agente
+### When completing an agent
 ```json
 {
   "checkpoints": {
@@ -34,7 +34,7 @@ O Reversa é o único agente que **escreve** no state.json. Os demais agentes ap
 }
 ```
 
-### Ao concluir uma fase inteira
+### When completing an entire phase
 ```json
 {
   "phase": "escavacao",
@@ -43,7 +43,7 @@ O Reversa é o único agente que **escreve** no state.json. Os demais agentes ap
 }
 ```
 
-### Ao marcar uma tarefa parcial do Archaeologist
+### When marking a partial Archaeologist task
 ```json
 {
   "checkpoints": {
@@ -55,17 +55,17 @@ O Reversa é o único agente que **escreve** no state.json. Os demais agentes ap
 }
 ```
 
-## Sequência de fases
+## Phase sequence
 
 ```
 null → reconhecimento → escavacao → interpretacao → geracao → revisao
 ```
 
-Ao mover de fase:
-- Retire a fase concluída de `pending` e adicione a `completed`
-- Atualize `phase` para a próxima fase
+When moving between phases:
+- Remove the completed phase from `pending` and add it to `completed`
+- Update `phase` to the next phase
 
-## Exemplo de state.json com análise em andamento
+## Example state.json with analysis in progress
 
 ```json
 {
@@ -99,8 +99,8 @@ Ao mover de fase:
 }
 ```
 
-## Mensagem de pausa por estouro de contexto
+## Pause message for context overflow
 
-Se o contexto estiver se esgotando, salve o checkpoint atual e diga:
+If the context is running out, save the current checkpoint and say:
 
-> "[Nome], vou pausar aqui para preservar o contexto. Tudo está salvo em `.reversa/state.json`. Digite `reversa` em uma nova sessão para continuar de onde paramos."
+> "[Name], I will pause here to preserve the context. Everything is saved in `.reversa/state.json`. Type `reversa` in a new session to continue from where we left off."
