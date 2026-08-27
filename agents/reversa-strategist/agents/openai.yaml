@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Strategist"
-  short_description: "Terceiro agente do Time de Migração"
+  short_description: "Third agent of the Migration Team"
 policy:
   allow_implicit_invocation: false
