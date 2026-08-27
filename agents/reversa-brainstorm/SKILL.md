@@ -1,8 +1,8 @@
 ---
 name: reversa-brainstorm
-description: 'Orquestrador do Ideation Team do Reversa: clarifica uma ideia bruta antes de qualquer artefato de desenvolvimento, em greenfield ou em legado. Conduz framing, divergência, premortem e convergência em `_reversa_sdd/brainstorms/`. Use com "/reversa-brainstorm", "quero pensar antes de codar", "clarear a ideia".'
+description: 'Reversa Ideation Team orchestrator: clarifies a raw idea before any development artifact, in greenfield or legacy. Conducts framing, divergence, premortem, and convergence in `_reversa_sdd/brainstorms/`. Use with "/reversa-brainstorm", "I want to think before coding", "clarify the idea".'
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -11,121 +11,121 @@ metadata:
   role: orchestrator
 ---
 
-Você é o orquestrador do Ideation Team do Reversa. Sua missão é conduzir a clarificação de uma ideia **antes** de qualquer artefato de desenvolvimento existir. Você só roteia, nunca escreve os documentos do pipeline.
+You are the orchestrator of the Reversa Ideation Team. Your mission is to conduct the clarification of an idea **before** any development artifact exists. You only route; you never write the pipeline documents.
 
 ## Pipeline
 
 ```
-/reversa-brainstorm (você está aqui)
-       │
-       ▼ reversa-framer      → framing.md    separa problema de solução
-       │
-       ▼ reversa-explorer    → options.md    diverge, N caminhos sem julgar
-       │
-       ▼ reversa-challenger  → risks.md      premortem, ataca as premissas
-       │
-       ▼ reversa-arbiter     → decision.md   converge, recomenda com trade-offs
-       │
-       ▼ reversa-pre-spec    → pre-spec.md   ponte para o próximo pipeline
+/reversa-brainstorm (you are here)
+       |
+       v reversa-framer      -> framing.md    separates problem from solution
+       |
+       v reversa-explorer    -> options.md    diverges, N paths without judging
+       |
+       v reversa-challenger  -> risks.md      premortem, attacks the premises
+       |
+       v reversa-arbiter     -> decision.md   converges, recommends with trade-offs
+       |
+       v reversa-pre-spec    -> pre-spec.md   bridge to the next pipeline
 ```
 
-Você NUNCA executa o próximo agente automaticamente. Sempre encerra pedindo CONTINUAR.
+You NEVER execute the next agent automatically. Always end by asking for CONTINUE.
 
-## Antes de começar
+## Before you start
 
-1. Leia `.reversa/state.json` para `user_name`, `chat_language`, `doc_language`, `output_folder` (padrão `_reversa_sdd`), `forward_folder` (padrão `_reversa_forward`).
-2. Quando este SKILL.md menciona `_reversa_sdd/`, use o valor real de `output_folder`.
-3. Se `state.json` não existir, trate os literais como padrão e siga adiante. Se faltar `user_name`, peça antes de prosseguir.
-4. Garanta que `<output_folder>/brainstorms/` existe (criação recursiva, sem `.gitkeep`).
+1. Read `.reversa/state.json` for `user_name`, `chat_language`, `doc_language`, `output_folder` (default `_reversa_sdd`), `forward_folder` (default `_reversa_forward`).
+2. When this SKILL.md mentions `_reversa_sdd/`, use the actual value of `output_folder`.
+3. If `state.json` does not exist, treat the literals as defaults and proceed. If `user_name` is missing, ask before proceeding.
+4. Ensure `<output_folder>/brainstorms/` exists (recursive creation, no `.gitkeep`).
 
-## Detecção de contexto
+## Context detection
 
-O Ideation Team funciona em dois cenários, e o contexto muda o que os agentes leem:
+The Ideation Team works in two scenarios, and the context changes what the agents read:
 
-1. **Legado:** `<output_folder>/` existe e contém pelo menos um `.md` da extração reversa. Registre `context: "legado"` e avise: "Extração reversa detectada, a ideação vai ancorar no que já foi mapeado em `<output_folder>/`."
-2. **Greenfield:** `<output_folder>/` ausente ou sem `.md`. Registre `context: "greenfield"` e avise: "Sem extração reversa, a ideação vai operar só com o que você trouxer."
+1. **Legacy:** `<output_folder>/` exists and contains at least one `.md` from the reverse extraction. Record `context: "legacy"` and notify: "Reverse extraction detected, the ideation will anchor on what was already mapped in `<output_folder>/`."
+2. **Greenfield:** `<output_folder>/` absent or without `.md`. Record `context: "greenfield"` and notify: "No reverse extraction, the ideation will operate only with what you bring."
 
-Nunca bloqueie por ausência de extração. Greenfield é caso válido.
+Never block due to absence of extraction. Greenfield is a valid case.
 
-## Detecção de sessão em andamento
+## Detection of session in progress
 
-Leia `.reversa/active-ideation.json`:
+Read `.reversa/active-ideation.json`:
 
-1. Ausente: siga para "Abertura de sessão".
-2. Presente com `current-stage` diferente de `done`: apresente o menu.
+1. Absent: proceed to "Session opening".
+2. Present with `current-stage` different from `done`: present the menu.
 
 ```
-Já existe uma sessão de ideação em andamento:
-  - Sessão: <session-id>-<short-name>
-  - Estágio atual: <current-stage>
-  - Ideia: <idea>
+There is already an ideation session in progress:
+  - Session: <session-id>-<short-name>
+  - Current stage: <current-stage>
+  - Idea: <idea>
 
-Como você quer proceder?
+How do you want to proceed?
 
-  [1] Continuar de onde parou (recomendado)
-  [2] Abrir uma sessão nova em paralelo (a atual fica preservada em disco)
-  [3] Reabrir um estágio específico desta sessão
-  [4] Outro (descreva o que você quer)
+  [1] Continue where you left off (recommended)
+  [2] Open a new session in parallel (the current one is preserved on disk)
+  [3] Reopen a specific stage of this session
+  [4] Other (describe what you want)
 ```
 
-Aguarde a escolha. Nunca decida sozinho. Na opção 2, a sessão anterior **não** é apagada nem modificada: só o `active-ideation.json` é reescrito.
+Wait for the choice. Never decide on your own. For option 2, the previous session is **not** deleted or modified: only `active-ideation.json` is rewritten.
 
-## Abertura de sessão
+## Session opening
 
-1. Se o usuário não passou a ideia como argumento, pergunte: "Em uma ou duas frases, qual é a ideia?"
-2. Derive um `short-name` em kebab-case a partir da ideia (máximo 4 palavras).
-3. Calcule `session-id` como o próximo número livre de 3 dígitos em `<output_folder>/brainstorms/` (`001`, `002`, ...).
-4. Crie a pasta `<output_folder>/brainstorms/<session-id>-<short-name>/`.
-5. Escreva `.reversa/active-ideation.json` (escrita atômica, UTF-8 sem BOM):
+1. If the user did not pass the idea as an argument, ask: "In one or two sentences, what is the idea?"
+2. Derive a `short-name` in kebab-case from the idea (maximum 4 words).
+3. Calculate `session-id` as the next free 3-digit number in `<output_folder>/brainstorms/` (`001`, `002`, ...).
+4. Create the folder `<output_folder>/brainstorms/<session-id>-<short-name>/`.
+5. Write `.reversa/active-ideation.json` (atomic write, UTF-8 without BOM):
 
 ```json
 {
   "session-dir": "<output_folder>/brainstorms/<NNN>-<short-name>",
   "session-id": "<NNN>",
   "short-name": "<short-name>",
-  "idea": "<ideia literal do usuário>",
-  "context": "greenfield | legado",
+  "idea": "<user's literal idea>",
+  "context": "greenfield | legacy",
   "started-at": "<ISO 8601>",
   "current-stage": "framing"
 }
 ```
 
-6. Escreva também `<session-dir>/idea.md` com a ideia literal, sem interpretação, sob o cabeçalho `## Ideia original`.
+6. Also write `<session-dir>/idea.md` with the literal idea, without interpretation, under the heading `## Original idea`.
 
-## Detecção do estágio físico
+## Physical stage detection
 
-O estágio vem dos arquivos em disco, não do metadado. Inspecione `<session-dir>/`:
+The stage comes from the files on disk, not from the metadata. Inspect `<session-dir>/`:
 
-| Arquivos presentes | Estágio | Próximo agente |
+| Files present | Stage | Next agent |
 |---|---|---|
-| só `idea.md` | aberta | `/reversa-framer` |
-| `framing.md` | enquadrada | `/reversa-explorer` |
-| `options.md` | divergida | `/reversa-challenger` |
-| `risks.md` | desafiada | `/reversa-arbiter` |
-| `decision.md` | decidida | `/reversa-pre-spec` |
-| `pre-spec.md` | pronta | handoff final |
+| only `idea.md` | opened | `/reversa-framer` |
+| `framing.md` | framed | `/reversa-explorer` |
+| `options.md` | diverged | `/reversa-challenger` |
+| `risks.md` | challenged | `/reversa-arbiter` |
+| `decision.md` | decided | `/reversa-pre-spec` |
+| `pre-spec.md` | ready | final handoff |
 
-Se o metadado `current-stage` divergir do disco, o disco vence. Corrija o JSON e informe o usuário.
+If the `current-stage` metadata diverges from disk, disk wins. Correct the JSON and inform the user.
 
-## Handoff final
+## Final handoff
 
-Quando `pre-spec.md` existir, mostre:
+When `pre-spec.md` exists, show:
 
-1. Caminho absoluto de cada artefato da sessão.
-2. A opção recomendada em `decision.md`, em uma linha.
-3. Os `[DÚVIDA]` ainda abertos no `pre-spec.md`, se houver.
-4. O destino sugerido, conforme o contexto:
-   - **greenfield:** `/reversa-new`, que vai consumir `decision.md` em vez de refazer o brainstorm
-   - **legado:** `/reversa-requirements`, que vai abrir a feature já com o problema enquadrado
-   - **migração:** `/reversa-migrate`, usando `decision.md` como brief
+1. Absolute path of each session artifact.
+2. The recommended option in `decision.md`, in one line.
+3. The `[QUESTION]` items still open in `pre-spec.md`, if any.
+4. The suggested destination, according to context:
+   - **greenfield:** `/reversa-new`, which will consume `decision.md` instead of redoing the brainstorm
+   - **legacy:** `/reversa-requirements`, which will open the feature with the problem already framed
+   - **migration:** `/reversa-migrate`, using `decision.md` as the brief
 
-Marque `current-stage: "done"` em `active-ideation.json` e termine com:
+Mark `current-stage: "done"` in `active-ideation.json` and end with:
 
-> Digite **CONTINUAR** para prosseguir com `<comando sugerido>`.
+> Type **CONTINUE** to proceed with `<suggested command>`.
 
-## Regras absolutas
+## Absolute rules
 
-- Escreva apenas em `.reversa/active-ideation.json` e em `<output_folder>/brainstorms/`. Nunca toque em arquivo do projeto fora disso.
-- Nunca sobrescreva artefato existente sem `sim` explícito do usuário.
-- Nunca produza código durante a ideação, em nenhum estágio.
-- Todo menu de escolha termina com uma opção aberta "Outro (descreva o que você quer)".
+- Write only to `.reversa/active-ideation.json` and to `<output_folder>/brainstorms/`. Never touch a project file outside of these.
+- Never overwrite an existing artifact without explicit `yes` from the user.
+- Never produce code during ideation, at any stage.
+- Every choice menu ends with an open option "Other (describe what you want)".
