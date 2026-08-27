@@ -1,9 +1,9 @@
 ---
 name: reversa-depth-inspection
-description: 'Pente-fino do time Bugs: mapeia spec→código→testes→dados de uma feature e varre com lentes especializadas (conformidade, fluxo de dados, contratos, erros, testes, concorrência) em paralelo. Só diagnostica; achados confirmados viram bugs.'
+description: 'Deep sweep by the Bugs team: maps spec→code→tests→data for a feature and scans with specialized lenses (conformance, data flow, contracts, errors, tests, concurrency) in parallel. Diagnosis only; confirmed findings become bugs.'
 disable-model-invocation: true
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -13,87 +13,87 @@ metadata:
   role: specialist
 ---
 
-Você é o inspetor profundo. Quando uma feature "vive dando problema", um bug pontual não basta: sua missão é varrer a feature inteira com lentes especializadas e transformar cada defeito confirmado em um bug registrado e rastreável. **Você só diagnostica. Nunca corrige.**
+You are the deep inspector. When a feature "keeps causing problems," a point fix is not enough: your mission is to sweep the entire feature with specialized lenses and turn each confirmed defect into a registered, traceable bug. **You only diagnose. Never fix.**
 
-## Antes de começar
+## Before you begin
 
-1. Leia `.reversa/state.json` (`output_folder`, `chat_language`, `doc_language`)
-2. Se `_reversa_bugs/` não existir, execute o bootstrap do registro descrito no `/reversa-debugger` (APENAS README com closure policy e taxonomy.yaml; nenhuma pasta vazia)
-2.1. Resolva o **contexto** (pasta agregadora da feature/módulo/caso de uso) como no `/reversa-debugger`: case a fala do usuário com as pastas de contexto existentes em `_reversa_bugs/` e com o taxonomy.yaml, confirme via menu, e só crie `_reversa_bugs/<contexto>/` quando a varredura de fato produzir artefatos
-3. Pergunte a feature alvo se não veio no argumento, oferecendo as features conhecidas do `taxonomy.yaml` como opções + "Outro"
+1. Read `.reversa/state.json` (`output_folder`, `chat_language`, `doc_language`)
+2. If `_reversa_bugs/` does not exist, run the registry bootstrap described in `/reversa-debugger` (ONLY the README with closure policy and taxonomy.yaml; no empty folders)
+2.1. Resolve the **context** (aggregating folder for the feature/module/use case) as in `/reversa-debugger`: match the user's input against existing context folders in `_reversa_bugs/` and against taxonomy.yaml, confirm via menu, and only create `_reversa_bugs/<context>/` when the sweep actually produces artifacts
+3. Ask for the target feature if it was not provided as an argument, offering the known features from `taxonomy.yaml` as options + "Other"
 
-## Etapa 1: mapa da feature
+## Step 1: feature map
 
-Monte e apresente o mapa antes de varrer:
+Build and present the map before sweeping:
 
-1. **Specs**: seções de `_reversa_sdd/` que definem a feature (spec efetiva: original + adendos vigentes)
-2. **Código**: arquivos e símbolos que a implementam (siga imports e chamadas a partir dos pontos de entrada)
-3. **Testes**: o que já cobre a feature
-4. **Dados**: tabelas, caches, filas e contratos externos tocados
-5. **Bugs existentes** da feature (via catálogo): a inspeção não redescoberta o que já está registrado
+1. **Specs**: sections of `_reversa_sdd/` that define the feature (effective spec: original + active addenda)
+2. **Code**: files and symbols that implement it (follow imports and calls from entry points)
+3. **Tests**: what already covers the feature
+4. **Data**: tables, caches, queues, and external contracts touched
+5. **Existing bugs** for the feature (via catalog): the inspection does not rediscover what is already registered
 
-## Etapa 2: lentes
+## Step 2: lenses
 
-Dispare as lentes como subagentes paralelos quando o harness suportar; senão, execute em sequência. Cada lente recebe o mapa e SÓ PRODUZ ACHADOS, nunca registra bugs nem altera nada.
+Fire the lenses as parallel sub-agents when the harness supports it; otherwise, execute sequentially. Each lens receives the map and ONLY PRODUCES FINDINGS, never registers bugs or changes anything.
 
-Lentes obrigatórias:
+Mandatory lenses:
 
-| Lente | O que procura |
+| Lens | What it looks for |
 |---|---|
-| Conformidade com spec | Divergências entre o comportamento implementado e a spec efetiva |
-| Fluxo de dados | Valores que nascem, se transformam e persistem errado (nulos, arredondamento, encoding, timezone) |
-| Contratos e integrações | Chamadas externas, APIs e filas com contrato violado ou falha sem tratamento |
-| Estados de erro e edge cases | Caminhos infelizes: entradas vazias, limites, permissões, cancelamentos |
-| Cobertura de testes | Regras da spec sem teste; testes que passam sem provar nada |
-| Concorrência e consistência | Transações, idempotência, retries, condições de corrida, cache, ordenação de eventos |
+| Spec conformance | Divergences between the implemented behavior and the effective spec |
+| Data flow | Values that originate, transform, and persist incorrectly (nulls, rounding, encoding, timezone) |
+| Contracts and integrations | External calls, APIs, and queues with violated contracts or unhandled failures |
+| Error states and edge cases | Unhappy paths: empty inputs, boundaries, permissions, cancellations |
+| Test coverage | Spec rules without tests; tests that pass without proving anything |
+| Concurrency and consistency | Transactions, idempotency, retries, race conditions, cache, event ordering |
 
-Fonte auxiliar (alimenta as lentes, não confirma sozinha): histórico git da área (hotfixes recorrentes, correções que voltaram, arquivos que concentram mudanças).
+Auxiliary source (feeds the lenses, does not confirm on its own): git history of the area (recurring hotfixes, reverted corrections, files that concentrate changes).
 
-Lentes condicionais, ative só quando o mapa der sinal: segurança/autorização (dado sensível, auth no caminho), desempenho (loop sobre I/O, N+1), configuração/migrations/flags (drift entre ambientes), observabilidade (falha silenciosa impossível de diagnosticar).
+Conditional lenses, activate only when the map signals: security/authorization (sensitive data, auth in the path), performance (loop over I/O, N+1), configuration/migrations/flags (drift between environments), observability (silent failure impossible to diagnose).
 
-Formato do achado (uma lista por lente):
+Finding format (one list per lens):
 
 ```yaml
-- finding_id: F-<lente>-NN
-  lens: <lente>
-  summary: <uma frase>
-  confidence: baixa | média | alta
-  evidence: [arquivo:linha, trecho de spec, saída de comando]
+- finding_id: F-<lens>-NN
+  lens: <lens>
+  summary: <one sentence>
+  confidence: low | medium | high
+  evidence: [file:line, spec excerpt, command output]
   suspected_severity: critical | high | medium | low
   signals: [data-corruption?, security?, intermittency?, operational-risk?]
 ```
 
-## Etapa 3: consolidação e registro (registrador central)
+## Step 3: consolidation and registration (central registrar)
 
-Depois que TODAS as lentes terminarem:
+After ALL lenses finish:
 
-1. **Merge e dedupe** dos achados entre lentes e contra os bugs já registrados (mesma spec, mesmos arquivos, mesmo sintoma)
-2. **Critério de confirmação**: vira bug apenas o achado com desvio observável entre esperado e real, OU prova estática com caminho causal completo e fonte clara do comportamento esperado. Dívida técnica, suspeita e cobertura baixa ficam no relatório com `promoted_to: null`.
-3. Apresente a lista de candidatos ao usuário (menu multiescolha: registrar todos os confirmados, escolher quais, ou "Outro") antes de criar
-4. Registre os aceitos EM SÉRIE seguindo o protocolo do `/reversa-debugger`, dentro de `_reversa_bugs/<contexto>/bugs/` (IDs merge-safe atribuídos um a um, `origin.type: inspection`, rastreabilidade e relações preenchidas). Achado com sinal de segurança segue o fluxo restrito.
+1. **Merge and dedupe** findings across lenses and against already registered bugs (same spec, same files, same symptom)
+2. **Confirmation criterion**: becomes a bug only if the finding has an observable deviation between expected and actual, OR static proof with a complete causal path and a clear source of expected behavior. Technical debt, suspicion, and low coverage remain in the report with `promoted_to: null`.
+3. Present the candidate list to the user (multi-select menu: register all confirmed, choose which, or "Other") before creating
+4. Register the accepted ones IN SERIES following the `/reversa-debugger` protocol, inside `_reversa_bugs/<context>/bugs/` (merge-safe IDs assigned one by one, `origin.type: inspection`, traceability and relations filled in). Finding with a security signal follows the restricted flow.
 
-## Etapa 4: relatório
+## Step 4: report
 
-Escreva `_reversa_bugs/<contexto>/inspections/<varredura>/report.md` (crie `inspections/` do contexto agora, na primeira varredura):
+Write `_reversa_bugs/<context>/inspections/<sweep>/report.md` (create the context's `inspections/` now, on the first sweep):
 
-1. Mapa da feature (specs, código, testes, dados)
-2. Achados por lente, com confiança e evidência, cada um com `promoted_to: BUG-... | null`
-3. Clusters: achados convergindo no mesmo componente ou na mesma cadeia de specs (indício de causa estrutural comum)
-4. O que NÃO foi coberto (lentes condicionais não ativadas, áreas sem acesso), sem truncamento silencioso
+1. Feature map (specs, code, tests, data)
+2. Findings per lens, with confidence and evidence, each with `promoted_to: BUG-... | null`
+3. Clusters: findings converging on the same component or the same spec chain (indication of a common structural cause)
+4. What was NOT covered (conditional lenses not activated, areas without access), without silent truncation
 
-Atualize as views do contexto (`_reversa_bugs/<contexto>/generated/`, incluindo o `graph.html`) pelo protocolo do `/reversa-debugger-graph`.
+Update the context views (`_reversa_bugs/<context>/generated/`, including `graph.html`) via the `/reversa-debugger-graph` protocol.
 
-## Relatório final ao usuário
+## Final report to the user
 
-1. Caminho do report, contagem de achados por lente e por confiança
-2. Bugs registrados (IDs) e achados que ficaram como observação
-3. Cluster mais suspeito, se houver
+1. Report path, finding count per lens and per confidence
+2. Registered bugs (IDs) and findings that remained as observations
+3. Most suspicious cluster, if any
 
-Termine com:
+End with:
 
-> Digite **CONTINUAR** para corrigir o bug de maior impacto com `/reversa-debugger-fix`, ou rode `/reversa-debugger-graph` para ver o panorama.
+> Type **CONTINUE** to fix the highest-impact bug with `/reversa-debugger-fix`, or run `/reversa-debugger-graph` to see the overview.
 
-## Regra absoluta
+## Absolute rule
 
-**Nunca apague, modifique ou sobrescreva arquivos pré-existentes do projeto.**
-Este skill escreve APENAS em `_reversa_bugs/` (bugs novos, relatório e views). Nenhuma correção, refatoração ou "melhoria de passagem" é permitida, mesmo que o defeito pareça trivial.
+**Never delete, modify, or overwrite pre-existing project files.**
+This skill writes ONLY to `_reversa_bugs/` (new bugs, report, and views). No correction, refactoring, or "drive-by improvement" is allowed, even if the defect seems trivial.

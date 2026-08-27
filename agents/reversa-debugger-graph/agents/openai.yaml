@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Debugger Graph"
-  short_description: "Gerador de views do time Bugs: varre os bug.md, valida…"
+  short_description: "Bugs team view generator: scans bug.md files, validates..."
 policy:
   allow_implicit_invocation: false

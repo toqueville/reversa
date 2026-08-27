@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Debugger Fix"
-  short_description: "Corretor de bugs do Reversa: reproduz, investiga causa raiz,…"
+  short_description: "Reversa bug fixer: reproduces, investigates root cause,..."
 policy:
   allow_implicit_invocation: false
