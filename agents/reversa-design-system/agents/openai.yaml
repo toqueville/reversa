@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Design System"
-  short_description: "Extrai e documenta o sistema de design do projeto legado —…"
+  short_description: "Extracts and documents the design system of the legacy project..."
 policy:
   allow_implicit_invocation: false

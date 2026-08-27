@@ -1,9 +1,9 @@
 ---
 name: reversa-requirements
-description: Transforma uma ideia em linguagem natural num documento de requisitos completo, ancorado nos artefatos da pipeline reversa. Primeiro skill do ciclo forward (requirements, doubt, plan, to-do, audit, quality, coding).
+description: Transforms a natural-language idea into a complete requirements document, anchored in the reverse pipeline artifacts. First skill of the forward cycle (requirements, doubt, plan, to-do, audit, quality, coding).
 disable-model-invocation: true
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI, and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -12,135 +12,135 @@ metadata:
   stage: requirements
 ---
 
-Você é o redator de requisitos do Reversa. Sua missão é converter o argumento livre passado pelo usuário (frase ou parágrafo descrevendo o objetivo da feature) num `requirements.md` completo, atravessando o conhecimento já extraído do sistema legado.
+You are the requirements writer of Reversa. Your mission is to convert the free-form argument provided by the user (a sentence or paragraph describing the feature's objective) into a complete `requirements.md`, cross-referencing the knowledge already extracted from the legacy system.
 
-## Antes de começar
+## Before you begin
 
-1. Leia `.reversa/state.json`
-   1.1. `output_folder` → pasta da extração reversa (padrão `_reversa_sdd`)
-   1.2. `forward_folder` → pasta das features forward (padrão `_reversa_forward`)
-   1.3. `chat_language` e `doc_language` → idioma de interação e do documento
-2. A partir daqui, sempre que o texto deste skill mencionar `_reversa_sdd/`, troque pelo `output_folder` real
-3. Sempre que mencionar `_reversa_forward/`, troque pelo `forward_folder` real
+1. Read `.reversa/state.json`
+   1.1. `output_folder` -- folder of the reverse extraction (default `_reversa_sdd`)
+   1.2. `forward_folder` -- folder of forward features (default `_reversa_forward`)
+   1.3. `chat_language` and `doc_language` -- interaction language and document language
+2. From here on, whenever this skill's text mentions `_reversa_sdd/`, replace with the actual `output_folder`
+3. Whenever it mentions `_reversa_forward/`, replace with the actual `forward_folder`
 
-## Verificações Iniciais
+## Initial checks
 
-1. Tente ler `.reversa/hooks.yml`
-   1.1. Se o YAML for inválido ou inexistente, prossiga sem ganchos
-   1.2. Se válido, procure a chave `before-requirements` e filtre entradas com `enabled: false`
-2. Para cada gancho restante:
-   2.1. Se `optional: true`, apresente como link em "## Ganchos Disponíveis" com `label`, `description` e `command`
-   2.2. Se `optional: false`, emita a diretiva `EXECUTAR: <comando>` e aguarde o resultado antes de prosseguir
-3. NUNCA tente avaliar a chave `condition` desses ganchos, apenas registre que ela existe e siga em frente
+1. Try to read `.reversa/hooks.yml`
+   1.1. If the YAML is invalid or does not exist, proceed without hooks
+   1.2. If valid, look for the `before-requirements` key and filter out entries with `enabled: false`
+2. For each remaining hook:
+   2.1. If `optional: true`, present it as a link in "## Available Hooks" with `label`, `description`, and `command`
+   2.2. If `optional: false`, emit the directive `EXECUTE: <command>` and wait for the result before proceeding
+3. NEVER try to evaluate the `condition` key of these hooks; just note that it exists and move on
 
-## Detecção de feature em andamento
+## In-progress feature detection
 
-Antes de criar feature nova, verifique se já existe uma anterior em andamento. A detecção é baseada em **artefatos físicos da feature**, não em campos auto-declarados, porque é resistente a skills que esquecem de atualizar metadados.
+Before creating a new feature, check whether a previous one is already in progress. Detection is based on **physical feature artifacts**, not on self-declared fields, because it is resilient to skills that forget to update metadata.
 
-1. Tente ler `.reversa/active-requirements.json`
-   1.1. Se o arquivo não existir, NÃO há feature em andamento, pule esta seção e siga direto para "Resolução do diretório da feature"
-   1.2. Se o JSON estiver inválido ou corrompido, trate como ausente, registre o problema em nota interna e siga adiante
-2. Leia o campo `feature-dir` do JSON
-   2.1. Se `feature-dir` não estiver presente ou apontar para pasta que não existe, trate como ausente, prossiga normalmente
-3. Identifique o **estágio físico atual** olhando os artefatos dentro de `feature-dir`:
+1. Try to read `.reversa/active-requirements.json`
+   1.1. If the file does not exist, there is NO feature in progress; skip this section and go directly to "Feature directory resolution"
+   1.2. If the JSON is invalid or corrupted, treat as absent, log the problem in an internal note, and proceed
+2. Read the `feature-dir` field from the JSON
+   2.1. If `feature-dir` is missing or points to a folder that does not exist, treat as absent and proceed normally
+3. Identify the **current physical stage** by looking at the artifacts inside `feature-dir`:
 
-   | Condição observada | Estágio físico |
+   | Observed condition | Physical stage |
    |--------------------|----------------|
-   | `requirements.md` ausente | `vazio` |
-   | `requirements.md` presente, `roadmap.md` ausente | `requirements` |
-   | `roadmap.md` presente, `actions.md` ausente | `plan` |
-   | `actions.md` presente com pelo menos uma linha `\| ... \| \[ \] \|` (checkbox aberto) | `coding-em-progresso` |
-   | `actions.md` presente, TODAS as linhas de ação como `\| ... \| \[X\] \|` (checkboxes fechados) | `done` |
+   | `requirements.md` absent | `empty` |
+   | `requirements.md` present, `roadmap.md` absent | `requirements` |
+   | `roadmap.md` present, `actions.md` absent | `plan` |
+   | `actions.md` present with at least one line `\| ... \| \[ \] \|` (open checkbox) | `coding-in-progress` |
+   | `actions.md` present, ALL action lines as `\| ... \| \[X\] \|` (closed checkboxes) | `done` |
 
-4. Considere a feature anterior **em andamento** quando o estágio físico for QUALQUER valor diferente de `done` e `vazio`. Ou seja:
-   4.1. `requirements`, `plan` ou `coding-em-progresso` → em andamento
-   4.2. `done` → concluída, trate como ausente, sobrescreva ao criar nova
-   4.3. `vazio` → corrupção, `feature-dir` existe mas sem `requirements.md`, trate como ausente
-5. Se for em andamento, registre internamente para uso na próxima seção:
-   5.1. Identificador da feature, no formato `<NNN>-<short-name>` derivado de `feature-dir` (basename)
-   5.2. Estágio físico detectado, valor entre `requirements`, `plan`, `coding-em-progresso`
-   5.3. Para `coding-em-progresso`, conte quantas ações `[X]` versus quantas `[ ]` em `actions.md`, isso ajuda o usuário a decidir
-6. Para a contagem de checkboxes em `actions.md`, considere apenas linhas de tabela que terminam com `\| [ ] \|` ou `\| [X] \|`. Cabeçalhos e linhas de texto livre são ignorados.
+4. Consider the previous feature **in progress** when the physical stage is ANY value other than `done` and `empty`. That is:
+   4.1. `requirements`, `plan`, or `coding-in-progress` -- in progress
+   4.2. `done` -- completed; treat as absent, overwrite when creating a new one
+   4.3. `empty` -- corruption; `feature-dir` exists but without `requirements.md`; treat as absent
+5. If in progress, record internally for use in the next section:
+   5.1. Feature identifier, in the format `<NNN>-<short-name>` derived from `feature-dir` (basename)
+   5.2. Detected physical stage, value among `requirements`, `plan`, `coding-in-progress`
+   5.3. For `coding-in-progress`, count how many `[X]` actions versus how many `[ ]` in `actions.md`; this helps the user decide
+6. For the checkbox count in `actions.md`, consider only table lines ending with `\| [ ] \|` or `\| [X] \|`. Headers and free-text lines are ignored.
 
-A política de o que fazer quando há feature em andamento está descrita na próxima seção "Política de re-execução".
+The policy for what to do when a feature is in progress is described in the next section, "Re-execution policy".
 
-## Política de re-execução
+## Re-execution policy
 
-Se a detecção identificou feature anterior em andamento (estágio físico em `requirements`, `plan` ou `coding-em-progresso`), **pergunte sempre ao usuário** antes de qualquer escrita. Não há default automático, o objetivo é eliminar surpresa.
+If the detection identified a previous feature in progress (physical stage in `requirements`, `plan`, or `coding-in-progress`), **always ask the user** before any write. There is no automatic default; the goal is to eliminate surprise.
 
-Apresente o bloco abaixo ao usuário:
+Present the block below to the user:
 
-> Já existe uma feature em andamento:
-> - Identificador: `<NNN>-<short-name>`
-> - Estágio detectado: `<estágio físico>`
-> - Progresso (apenas para `coding-em-progresso`): `<N>` de `<M>` ações concluídas
+> There is already a feature in progress:
+> - Identifier: `<NNN>-<short-name>`
+> - Detected stage: `<physical stage>`
+> - Progress (only for `coding-in-progress`): `<N>` of `<M>` actions completed
 >
-> Como você quer proceder?
+> How do you want to proceed?
 >
-> **1. Continuar a anterior**, vou abortar este `/reversa-requirements` e você retoma a feature em curso.
-> **2. Criar nova em paralelo**, a feature anterior fica pausada num campo `paused-features` e a nova vira ativa.
-> **3. Abandonar a anterior**, a pasta antiga fica em disco intocada mas `active-requirements.json` vai apontar pra nova.
+> **1. Continue the previous one** -- I will abort this `/reversa-requirements` and you resume the current feature.
+> **2. Create a new one in parallel** -- the previous feature gets paused in a `paused-features` field and the new one becomes active.
+> **3. Abandon the previous one** -- the old folder stays on disk untouched but `active-requirements.json` will point to the new one.
 >
-> Digite 1, 2 ou 3.
+> Type 1, 2, or 3.
 
-Aguarde a resposta. NÃO escolha por conta própria, NÃO interprete silêncio como confirmação de qualquer opção.
+Wait for the response. DO NOT choose on your own; DO NOT interpret silence as confirmation of any option.
 
-### Opção 1, continuar a anterior
+### Option 1 -- continue the previous one
 
-1. Não escreva em `active-requirements.json`
-2. Não crie pasta nova em `_reversa_forward/`
-3. Sugira ao usuário o próximo skill apropriado para o estágio físico:
-   3.1. `requirements` → `/reversa-clarify` (se houver marcadores `[DÚVIDA]` no `requirements.md`) ou `/reversa-plan`
-   3.2. `plan` → `/reversa-to-do`
-   3.3. `coding-em-progresso` → `/reversa-coding` (pode receber argumento livre restringindo escopo, ex.: "T010-T015")
-4. Encerre este skill com mensagem clara informando que nada foi escrito, NÃO execute as próximas seções
+1. Do not write to `active-requirements.json`
+2. Do not create a new folder in `_reversa_forward/`
+3. Suggest the appropriate next skill for the physical stage:
+   3.1. `requirements` -- `/reversa-clarify` (if there are `[DOUBT]` markers in `requirements.md`) or `/reversa-plan`
+   3.2. `plan` -- `/reversa-to-do`
+   3.3. `coding-in-progress` -- `/reversa-coding` (can receive a free-form argument restricting scope, e.g., "T010-T015")
+4. Terminate this skill with a clear message stating that nothing was written; DO NOT execute the next sections
 
-### Opção 2, criar nova em paralelo
+### Option 2 -- create a new one in parallel
 
-1. Leia o `active-requirements.json` atual e o campo `paused-features`
-   1.1. Se o campo não existir, considere `paused-features: []`
-2. Construa entrada de pausa para a feature anterior, copiando os campos do `active-requirements.json` atual e acrescentando os dois campos de pausa:
+1. Read the current `active-requirements.json` and the `paused-features` field
+   1.1. If the field does not exist, consider `paused-features: []`
+2. Build a pause entry for the previous feature, copying the fields from the current `active-requirements.json` and adding the two pause fields:
 
 ```json
 {
-  "feature-dir": "<feature-dir relativo>",
+  "feature-dir": "<relative feature-dir>",
   "feature-id": "<NNN>",
   "short-name": "<short-name>",
-  "started-at": "<ISO 8601 do active-requirements.json atual>",
-  "current-stage": "<valor atual do campo, mesmo sendo metadado informativo>",
+  "started-at": "<ISO 8601 from the current active-requirements.json>",
+  "current-stage": "<current field value, even though it is informational metadata>",
   "stages-completed": [],
-  "paused-at": "<ISO 8601 da hora atual>",
-  "paused-from-stage": "<estágio físico detectado: requirements | plan | coding-em-progresso>"
+  "paused-at": "<ISO 8601 of the current time>",
+  "paused-from-stage": "<detected physical stage: requirements | plan | coding-in-progress>"
 }
 ```
 
-   2.1. Os campos `started-at`, `current-stage` e `stages-completed` permitem que `/reversa-resume` retome essa feature depois sem perder dados originais
-3. Adicione essa entrada ao final do array `paused-features` (push, ordem cronológica)
-4. Siga normalmente para "Resolução do diretório da feature". Ao escrever o `active-requirements.json` novo (passo 5 daquela seção), INCLUA o array `paused-features` atualizado no JSON
+   2.1. The `started-at`, `current-stage`, and `stages-completed` fields allow `/reversa-resume` to resume this feature later without losing original data
+3. Add this entry to the end of the `paused-features` array (push, chronological order)
+4. Proceed normally to "Feature directory resolution". When writing the new `active-requirements.json` (step 5 of that section), INCLUDE the updated `paused-features` array in the JSON
 
-### Opção 3, abandonar a anterior
+### Option 3 -- abandon the previous one
 
-1. Leia o `active-requirements.json` atual e o campo `paused-features`
-   1.1. Se o campo não existir, considere `paused-features: []`
-2. NÃO adicione a feature recém-abandonada ao array `paused-features` (ela fica órfã na pasta `_reversa_forward/`, sem registro ativo, recuperável apenas por listagem manual)
-3. Siga normalmente. Ao escrever o `active-requirements.json` novo, preserve o array `paused-features` herdado do JSON anterior (sem adicionar a abandonada)
+1. Read the current `active-requirements.json` and the `paused-features` field
+   1.1. If the field does not exist, consider `paused-features: []`
+2. DO NOT add the newly abandoned feature to the `paused-features` array (it becomes orphaned in the `_reversa_forward/` folder, with no active record, recoverable only by manual listing)
+3. Proceed normally. When writing the new `active-requirements.json`, preserve the `paused-features` array inherited from the previous JSON (without adding the abandoned one)
 
-A diretriz **non-destructive** vale aqui: em nenhuma das três opções a pasta da feature anterior em `_reversa_forward/` é apagada ou modificada. Apenas o `active-requirements.json` (gerenciado pelo Reversa) é reescrito.
+The **non-destructive** directive applies here: in none of the three options is the previous feature's folder in `_reversa_forward/` deleted or modified. Only `active-requirements.json` (managed by Reversa) is rewritten.
 
-## Resolução do diretório da feature
+## Feature directory resolution
 
-1. Leia `.reversa/setup.json`
-   1.1. Se `prefix-format` estiver ausente ou for `sequencial`, calcule o próximo `NNN` listando subpastas de `_reversa_forward/` no formato `NNN-*` e somando 1 ao maior
-   1.2. Se `prefix-format` for `timestamp`, use `YYYYMMDD-HHMMSS` da hora corrente
-2. Gere um `short-name` em kebab-case ASCII a partir do argumento livre, máximo trinta caracteres
-3. Defina `feature-dir = _reversa_forward/<NNN>-<short-name>` (ou `_reversa_forward/<TIMESTAMP>-<short-name>`)
-4. Crie `feature-dir` se não existir
-5. Atualize `.reversa/active-requirements.json` com o conteúdo abaixo, usando escrita atômica (tempfile mais rename):
+1. Read `.reversa/setup.json`
+   1.1. If `prefix-format` is absent or is `sequencial`, calculate the next `NNN` by listing subfolders of `_reversa_forward/` in the format `NNN-*` and adding 1 to the largest
+   1.2. If `prefix-format` is `timestamp`, use `YYYYMMDD-HHMMSS` of the current time
+2. Generate a `short-name` in kebab-case ASCII from the free-form argument, maximum thirty characters
+3. Define `feature-dir = _reversa_forward/<NNN>-<short-name>` (or `_reversa_forward/<TIMESTAMP>-<short-name>`)
+4. Create `feature-dir` if it does not exist
+5. Update `.reversa/active-requirements.json` with the content below, using atomic write (tempfile plus rename):
 
 ```json
 {
   "schema-version": 1,
-  "feature-dir": "<caminho relativo do projeto>",
+  "feature-dir": "<project-relative path>",
   "feature-id": "<NNN>",
   "short-name": "<short>",
   "started-at": "<ISO 8601>",
@@ -150,68 +150,68 @@ A diretriz **non-destructive** vale aqui: em nenhuma das três opções a pasta 
 }
 ```
 
-   5.1. O campo `paused-features` vem do array atualizado conforme a opção escolhida em "Política de re-execução" (vazio se foi a primeira feature do projeto)
-   5.2. Os campos `current-stage` e `stages-completed` são metadado informativo, não autoritativo, a detecção real do estágio é feita por artefatos físicos
+   5.1. The `paused-features` field comes from the updated array per the option chosen in "Re-execution policy" (empty if this is the project's first feature)
+   5.2. The `current-stage` and `stages-completed` fields are informational metadata, not authoritative; the real stage detection is done via physical artifacts
 
-Política de re-execução: se `active-requirements.json` já apontar para uma feature anterior, **pergunte ao usuário** antes de sobrescrever. Opções: continuar a anterior, criar nova feature em paralelo, ou abandonar a anterior.
+Re-execution policy: if `active-requirements.json` already points to a previous feature, **ask the user** before overwriting. Options: continue the previous one, create a new feature in parallel, or abandon the previous one.
 
-## Coleta de contexto a partir da extração reversa
+## Context gathering from the reverse extraction
 
-Antes de escrever o requirements, leia, na ordem (pulando o que não existir):
+Before writing the requirements, read in order (skipping what does not exist):
 
-1. `_reversa_sdd/architecture.md` (panorama dos componentes)
-2. `_reversa_sdd/domain.md` (regras de negócio confirmadas)
-3. `_reversa_sdd/inventory.md` (superfície do código)
-4. `_reversa_sdd/code-analysis.md` SOMENTE nas seções dos componentes que o argumento livre parece tocar
-5. `_reversa_sdd/addenda/*.md` (adendos de features já entregues pelo ciclo forward, criados pelo `/reversa-sync`). Considere APENAS os vigentes (seção Vigência sem linha de superação): eles corrigem a leitura dos artefatos acima para deltas que a extração ainda não absorveu
-6. `.reversa/principles.md` (princípios do projeto, se existir)
+1. `_reversa_sdd/architecture.md` (component overview)
+2. `_reversa_sdd/domain.md` (confirmed business rules)
+3. `_reversa_sdd/inventory.md` (code surface)
+4. `_reversa_sdd/code-analysis.md` ONLY the sections of components the free-form argument appears to touch
+5. `_reversa_sdd/addenda/*.md` (addenda from features already delivered by the forward cycle, created by `/reversa-sync`). Consider ONLY the active ones (Validity section without a supersession line): they correct the reading of the above artifacts for deltas not yet absorbed by the extraction
+6. `.reversa/principles.md` (project principles, if it exists)
 
-Identifique os arquivos relevantes. Cada citação dentro do requirements precisa apontar para essas fontes no formato `_reversa_sdd/<arquivo>#<seção>`.
+Identify the relevant files. Each citation inside the requirements must point to these sources in the format `_reversa_sdd/<file>#<section>`.
 
-## Construção do requirements.md
+## Building requirements.md
 
-1. Carregue o template em `.reversa/templates/requirements-template.md`
-2. Preserve a ordem das seções obrigatórias
-3. Preencha cada seção respeitando o comentário inline orientador
-4. Marque com `[DÚVIDA]` qualquer ponto onde a informação faltar ou for ambígua
-5. Limite o número total de marcadores `[DÚVIDA]` a no máximo três no documento inicial
-   5.1. Priorize, em ordem: escopo, segurança e privacidade, experiência do usuário, técnico
-6. Use a marcação 🟢 / 🟡 / 🔴 nos itens conforme a confidência da fonte original
+1. Load the template at `.reversa/templates/requirements-template.md`
+2. Preserve the order of the mandatory sections
+3. Fill each section respecting the inline guiding comment
+4. Mark with `[DOUBT]` any point where information is missing or ambiguous
+5. Limit the total number of `[DOUBT]` markers to at most three in the initial document
+   5.1. Prioritize in order: scope, security and privacy, user experience, technical
+6. Use the 🟢 / 🟡 / 🔴 marking on items according to the confidence of the original source
 
-## Auto-validação iterativa
+## Iterative self-validation
 
-1. Após escrever o `requirements.md`, leia o template `quality-template.md`
-2. Aplique mentalmente a checklist
-3. Se houver itens reprovados, reescreva as seções afetadas
-4. Repita esse ciclo no máximo três vezes
-5. Persistindo problemas após três iterações, registre-os em uma seção final `## Pendências de Qualidade` e siga em frente
+1. After writing `requirements.md`, read the `quality-template.md` template
+2. Mentally apply the checklist
+3. If there are failing items, rewrite the affected sections
+4. Repeat this cycle at most three times
+5. If problems persist after three iterations, record them in a final `## Quality Gaps` section and move on
 
-## Persistência
+## Persistence
 
-- Grave `requirements.md` em `feature-dir/`
-- A escrita deve ser atômica (tempfile mais rename)
-- Use UTF-8 sem BOM
+- Write `requirements.md` to `feature-dir/`
+- The write must be atomic (tempfile plus rename)
+- Use UTF-8 without BOM
 
-## Ganchos Pós-execução
+## Post-execution hooks
 
-1. Procure `after-requirements` em `.reversa/hooks.yml`
-2. Aplique a mesma regra de filtragem (`enabled: false` é descartado)
-3. Para `optional: true`, apresente links em "## Ganchos Disponíveis"
-4. Para `optional: false`, emita `EXECUTAR: <comando>` e aguarde
+1. Look for `after-requirements` in `.reversa/hooks.yml`
+2. Apply the same filtering rule (`enabled: false` is discarded)
+3. For `optional: true`, present links in "## Available Hooks"
+4. For `optional: false`, emit `EXECUTE: <command>` and wait
 
-## Relatório final
+## Final report
 
-No final da execução, mostre ao usuário:
+At the end of execution, show the user:
 
-1. Caminho absoluto de `feature-dir`
-2. Caminho absoluto de `requirements.md`
-3. Número de marcadores `[DÚVIDA]` no documento
-4. Sugestão de próximo passo:
-   4.1. Se houver `[DÚVIDA]`, sugerir `/reversa-clarify`
-   4.2. Caso contrário, sugerir `/reversa-plan`
+1. Absolute path of `feature-dir`
+2. Absolute path of `requirements.md`
+3. Number of `[DOUBT]` markers in the document
+4. Suggested next step:
+   4.1. If there are `[DOUBT]` markers, suggest `/reversa-clarify`
+   4.2. Otherwise, suggest `/reversa-plan`
 
-Termine sempre com:
+Always end with:
 
-> Digite **CONTINUAR** para prosseguir com `/reversa-clarify` ou `/reversa-plan` conforme a sugestão acima.
+> Type **CONTINUE** to proceed with `/reversa-clarify` or `/reversa-plan` as suggested above.
 
-NUNCA prossiga automaticamente para o próximo comando, deixe a decisão com o usuário.
+NEVER proceed automatically to the next command; leave the decision to the user.
