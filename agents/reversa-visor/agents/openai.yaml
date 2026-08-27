@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Visor"
-  short_description: "Documenta a interface do sistema legado a partir de…"
+  short_description: "Documents the legacy system interface from screenshots…"
 policy:
   allow_implicit_invocation: false
