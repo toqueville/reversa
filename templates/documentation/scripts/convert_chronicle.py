@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-convert_chronicle.py — Converte .reversa/chronicle.md em timeline.json.
+convert_chronicle.py — Converts .reversa/chronicle.md to timeline.json.
 
-Esqueleto da Onda 1. Parser real de markdown e classificação de eventos na TASK-09.
+Wave 1 skeleton. Real markdown parser and event classification in TASK-09.
 
-Uso:
+Usage:
     python convert_chronicle.py --src .reversa/chronicle.md \
                                 --out _reversa_docs/assets/data/timeline.json
 """
@@ -43,13 +43,13 @@ def parse_chronicle(text: str):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--src", required=True, help="Caminho para .reversa/chronicle.md")
-    parser.add_argument("--out", required=True, help="Caminho de saída do timeline.json")
+    parser.add_argument("--src", required=True, help="Path to .reversa/chronicle.md")
+    parser.add_argument("--out", required=True, help="Output path for timeline.json")
     args = parser.parse_args()
 
     src = Path(args.src)
     if not src.exists():
-        print(f"AVISO: {src} não existe. Pulando geração de timeline.json.")
+        print(f"WARNING: {src} does not exist. Skipping timeline.json generation.")
         return
 
     text = src.read_text(encoding="utf-8")
@@ -64,7 +64,7 @@ def main():
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"OK: {len(events)} eventos em {out_path}")
+    print(f"OK: {len(events)} events in {out_path}")
 
 
 if __name__ == "__main__":

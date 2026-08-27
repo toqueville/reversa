@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-list_specs.py — Lista specs em _reversa_sdd/ e produz features-index.json.
+list_specs.py — Lists specs in _reversa_sdd/ and produces features-index.json.
 
-Esqueleto da Onda 1. Extração de metadados (status, tamanho, autor) na TASK-10.
+Wave 1 skeleton. Metadata extraction (status, size, author) in TASK-10.
 
-Uso:
+Usage:
     python list_specs.py --sdd-root _reversa_sdd \
                          --out _reversa_docs/assets/data/features-index.json
 """
@@ -50,8 +50,8 @@ def find_specs(sdd_root: Path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sdd-root", default="_reversa_sdd", help="Raiz das specs SDD")
-    parser.add_argument("--out", required=True, help="Caminho de saída do features-index.json")
+    parser.add_argument("--sdd-root", default="_reversa_sdd", help="SDD specs root")
+    parser.add_argument("--out", required=True, help="Output path for features-index.json")
     args = parser.parse_args()
 
     sdd_root = Path(args.sdd_root)
@@ -67,7 +67,7 @@ def main():
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"OK: {len(specs)} specs em {out_path}")
+    print(f"OK: {len(specs)} specs in {out_path}")
 
 
 if __name__ == "__main__":

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-extract_modules.py — Produz modules.json para o Time Reversa Docs.
+extract_modules.py — Produces modules.json for the Reversa Docs Team.
 
-Esqueleto da Onda 1. Implementação completa na TASK-07.
+Wave 1 skeleton. Full implementation in TASK-07.
 
-Schema de saída: ver specs/reversa-docs/design.md, seção
-"JSONs intermediários em assets/data/" → "Schema de modules.json".
+Output schema: see specs/reversa-docs/design.md, section
+"Intermediate JSONs in assets/data/" -> "modules.json Schema".
 
-Uso:
+Usage:
     python extract_modules.py --root . --out _reversa_docs/assets/data/modules.json
 """
 
@@ -60,14 +60,14 @@ def walk_modules(root: Path):
                 "folder": str(Path(dirpath).relative_to(root)).replace("\\", "/") or ".",
                 "loc": count_loc(abs_path),
                 "language": LANG_BY_EXT[ext],
-                # complexity e type ficam para a TASK-07 (precisam de AST por linguagem)
+                # complexity and type deferred to TASK-07 (require per-language AST)
             }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", default=".", help="Raiz do projeto a analisar")
-    parser.add_argument("--out", required=True, help="Caminho de saída do modules.json")
+    parser.add_argument("--root", default=".", help="Project root to analyze")
+    parser.add_argument("--out", required=True, help="Output path for modules.json")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -83,7 +83,7 @@ def main():
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"OK: {len(modules)} módulos em {out_path}")
+    print(f"OK: {len(modules)} modules in {out_path}")
 
 
 if __name__ == "__main__":

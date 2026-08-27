@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-convert_soul.py — Converte .reversa/soul.md em soul.json estruturado.
+convert_soul.py — Converts .reversa/soul.md to structured soul.json.
 
-Esqueleto da Onda 1. Extração rica (entidades, decisões, sinônimos) na TASK-10.
+Wave 1 skeleton. Rich extraction (entities, decisions, synonyms) in TASK-10.
 
-Uso:
+Usage:
     python convert_soul.py --src .reversa/soul.md \
                            --out _reversa_docs/assets/data/soul.json
 """
@@ -44,13 +44,13 @@ def split_sections(text: str):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--src", required=True, help="Caminho para .reversa/soul.md")
-    parser.add_argument("--out", required=True, help="Caminho de saída do soul.json")
+    parser.add_argument("--src", required=True, help="Path to .reversa/soul.md")
+    parser.add_argument("--out", required=True, help="Output path for soul.json")
     args = parser.parse_args()
 
     src = Path(args.src)
     if not src.exists():
-        print(f"AVISO: {src} não existe. Pulando geração de soul.json.")
+        print(f"WARNING: {src} does not exist. Skipping soul.json generation.")
         return
 
     text = src.read_text(encoding="utf-8")
@@ -60,13 +60,13 @@ def main():
         "schemaVersion": 1,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "sections": sections,
-        "concepts": [],  # extração rica fica para TASK-10
+        "concepts": [],  # rich extraction deferred to TASK-10
     }
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"OK: {len(sections)} seções em {out_path}")
+    print(f"OK: {len(sections)} sections in {out_path}")
 
 
 if __name__ == "__main__":
