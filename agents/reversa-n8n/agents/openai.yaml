@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa N8n"
-  short_description: "Gera specs SDD (workflow-overview, requirements, design) a…"
+  short_description: "Generates SDD specs (workflow-overview, requirements, design) from…"
 policy:
   allow_implicit_invocation: false
