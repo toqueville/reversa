@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Paradigm Advisor"
-  short_description: "Primeiro agente do Time de Migração"
+  short_description: "First agent of the Migration Team"
 policy:
   allow_implicit_invocation: false

@@ -1,33 +1,33 @@
-# Schema da oportunidade e da transformação
+# Opportunity and transformation schema
 
-Contrato mínimo dos artefatos que o time Code Quality escreve. Front matter YAML + corpo em Markdown. Escrita atômica (tempfile + rename, UTF-8 sem BOM).
+Minimum contract for the artifacts the Code Quality team writes. YAML front matter + Markdown body. Atomic writing (tempfile + rename, UTF-8 without BOM).
 
 ## opportunities/<id>.md
 
 ```yaml
 ---
 schema_version: 1
-id: OPP-<YYYYMMDD>-<sufixo>          # sufixo: 4 chars base32 de hash de título+data
-display_number: <n>                  # apelido humano global, maior existente + 1
-context: <slug-do-contexto>
+id: OPP-<YYYYMMDD>-<suffix>          # suffix: 4 chars base32 hash of title+date
+display_number: <n>                  # human-friendly global alias, highest existing + 1
+context: <context-slug>
 verb: restructure | modularize | decouple | optimize | simplify | standardize | prune
-title: <frase curta>
+title: <short phrase>
 target:
-  files: [<caminho>, ...]
-  symbol: <opcional: função/classe/módulo>
-smell: <code smell ou motivo objetivo>
+  files: [<path>, ...]
+  symbol: <optional: function/class/module>
+smell: <code smell or objective reason>
 roi:
-  confidence: green | yellow | red    # 🟢 coberto e entendido | 🟡 parcial | 🔴 sem prova
-  impact: <por que vale: hotpath, acoplamento, risco, clareza>
+  confidence: green | yellow | red    # 🟢 covered and understood | 🟡 partial | 🔴 no proof
+  impact: <why it matters: hotpath, coupling, risk, clarity>
   cost: low | medium | high
-  est_return: <retorno esperado em uma frase>
+  est_return: <expected return in one sentence>
 state: proposed | approved | applied | reverted | declined
 traceability:
-  soul: [<locator em soul.md>, ...]   # regras/decisões da alma que tocam o alvo
-  specs: [<caminho#âncora>, ...]      # seções de spec confirmadas relacionadas
+  soul: [<locator in soul.md>, ...]   # soul rules/decisions that touch the target
+  specs: [<path#anchor>, ...]         # confirmed related spec sections
 ---
 
-<descrição da oportunidade, com o antes observado e a transformação proposta>
+<description of the opportunity, with the observed before and the proposed transformation>
 ```
 
 ## transformations/OPP-.../transformation.md
@@ -36,7 +36,7 @@ traceability:
 ---
 schema_version: 1
 id: OPP-<...>
-verb: <o mesmo da oportunidade>
+verb: <same as the opportunity>
 state: applied | reverted
 safety_net:
   kind: existing | characterization | none
@@ -44,25 +44,25 @@ safety_net:
   green_after: true | false
 preservation:
   method: tests | equivalence-proof | death-proof | pattern-only
-  evidence: [<caminho relativo>, ...]
-measurement:                          # obrigatório para optimize/decouple/simplify
-  before: <complexidade/acoplamento/tempo antes>
-  after: <depois>
+  evidence: [<relative path>, ...]
+measurement:                          # required for optimize/decouple/simplify
+  before: <complexity/coupling/time before>
+  after: <after>
 change_set:
   - chg: CHG-001
-    file: <caminho>
-    purpose: <o que muda>
+    file: <path>
+    purpose: <what changes>
 approval:
   by: user
   at: <ISO 8601>
 reversible_via: [CHG-001.diff, ...]
 ---
 
-<o que foi feito, por etapa, com links relativos para as evidências>
+<what was done, step by step, with relative links to the evidence>
 ```
 
-## Regras
+## Rules
 
-- `soul` e `specs` confirmados que tocam o alvo são consultados sempre. Regra de negócio confirmada nunca é ferida nem tratada como código morto.
-- Estados são monotônicos no sentido de auditoria: `declined` e `reverted` preservam o histórico, nunca apagam o registro.
-- `prune` só marca `state: applied` com `preservation.method: death-proof` e a prova anexada. Órfão suspeito fica `proposed` com `promoted_to: null`.
+- Confirmed `soul` and `specs` that touch the target are always consulted. A confirmed business rule is never violated nor treated as dead code.
+- States are monotonic in the audit sense: `declined` and `reverted` preserve history, never erase the record.
+- `prune` only marks `state: applied` with `preservation.method: death-proof` and the proof attached. A suspected orphan stays `proposed` with `promoted_to: null`.

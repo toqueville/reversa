@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Modularize"
-  short_description: "Modularização: divide um trecho grande em módulos coesos com…"
+  short_description: "Modularization: splits a large section into cohesive modules with..."
 policy:
   allow_implicit_invocation: false

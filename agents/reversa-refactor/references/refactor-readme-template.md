@@ -1,35 +1,35 @@
-# Registro de Qualidade de Código (Reversa Refactor)
+# Code Quality Registry (Reversa Refactor)
 
-> GENERATED / MANAGED pelo time Code Quality do Reversa. Este README guarda as políticas do registro.
-> As pastas de contexto e os artefatos de transformação nascem sob demanda.
+> GENERATED / MANAGED by the Reversa Code Quality team. This README holds the registry policies.
+> Context folders and transformation artifacts are created on demand.
 
-## Políticas
+## Policies
 
 - `control_mode`: gated
-  - `gated` (padrão): leitura, análise, medição e prova de comportamento fluem sem aprovação. TODO passo que toca o código do projeto passa por gate com diff aprovado.
-  - `supervised`: o agente pode aplicar transformações de baixo risco já provadas, avisando; alto risco continua com gate.
-  - `autonomous`: aplica automaticamente o que estiver 🟢 e provado. Mesmo aqui têm gate obrigatório: remover código, alterar spec efetiva, enviar material a harness externo, operação destrutiva.
+  - `gated` (default): reading, analysis, measurement, and behavior proof flow without approval. EVERY step that touches project code goes through a gate with an approved diff.
+  - `supervised`: the agent can apply low-risk transformations already proven, notifying; high risk continues with a gate.
+  - `autonomous`: automatically applies what is 🟢 and proven. Even here there are mandatory gates: removing code, altering effective spec, sending material to external harness, destructive operation.
 - `safety_net_policy`: require-characterization
-  - `require-characterization` (padrão): transformação que altera estrutura ou lógica exige rede de segurança (testes existentes + caracterização) verde antes e depois.
-  - `allow-unproven`: permite transformação sem rede, sempre rebaixada para 🔴 e marcada como sem prova mecânica no registro.
+  - `require-characterization` (default): transformation that alters structure or logic requires a safety net (existing tests + characterization) green before and after.
+  - `allow-unproven`: allows transformation without a net, always downgraded to 🔴 and marked as without mechanical proof in the registry.
 
-## Invariante do registro
+## Registry invariant
 
-Nenhuma transformação altera comportamento observável. O que não prova preservação, para no gate. Toda transformação aplicada é revertível pelo diff guardado.
+No transformation alters observable behavior. What does not prove preservation stops at the gate. Every applied transformation is reversible via the stored diff.
 
-## Estrutura
+## Structure
 
 ```
 _reversa_refactor/
-  README.md                         (este arquivo)
-  <contexto>/                        (feature, módulo ou caso de uso)
-    opportunities/                   (oportunidades detectadas, uma por arquivo)
+  README.md                         (this file)
+  <context>/                        (feature, module, or use case)
+    opportunities/                   (detected opportunities, one per file)
     transformations/
-      OPP-<data>-<sufixo>-<slug>/
-        plan.html                    (relatório visual do plano, antes de tocar arquivo)
-        safety-net/                  (testes de caracterização + resultado verde/vermelho)
-        before-after/                (evidência: medição, prova de equivalência, prova de morte)
-        CHG-NNN.diff                 (diffs aplicados, fonte de reversão)
-        transformation.md            (registro conforme opportunity-schema.md)
-    generated/                       (index e catalog regeneráveis, nunca editados à mão)
+      OPP-<date>-<suffix>-<slug>/
+        plan.html                    (visual report of the plan, before touching any file)
+        safety-net/                  (characterization tests + green/red result)
+        before-after/                (evidence: measurement, equivalence proof, death proof)
+        CHG-NNN.diff                 (applied diffs, source of reversal)
+        transformation.md            (record per opportunity-schema.md)
+    generated/                       (index and catalog, regenerable, never manually edited)
 ```

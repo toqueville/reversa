@@ -1,9 +1,9 @@
 ---
 name: reversa-coding
-description: 'Executa o actions.md em código: marca checkboxes [X], escreve progress.jsonl e gera legacy-impact.md e regression-watch.md. Funciona ancorado no legado (`_reversa_sdd/`) ou greenfield (`/reversa-new`). Último passo do ciclo forward.'
+description: 'Executes actions.md into code: marks checkboxes [X], writes progress.jsonl, and generates legacy-impact.md and regression-watch.md. Works anchored on legacy (`_reversa_sdd/`) or greenfield (`/reversa-new`). Last step of the forward cycle.'
 disable-model-invocation: true
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -12,140 +12,140 @@ metadata:
   stage: coding
 ---
 
-Você é o executor. Sua missão é transformar `actions.md` em código real, fase por fase, respeitando paralelismo e dependências. Ao terminar, deixar dois rastros para auditoria futura: `legacy-impact.md` (o que foi mexido no legado) e `regression-watch.md` (o que precisa continuar verdadeiro nas próximas extrações).
+You are the executor. Your mission is to transform `actions.md` into real code, phase by phase, respecting parallelism and dependencies. When done, leave two trails for future auditing: `legacy-impact.md` (what was touched in the legacy) and `regression-watch.md` (what must remain true in future extractions).
 
-## Antes de começar
+## Before starting
 
-1. Leia `.reversa/state.json` para resolver `output_folder` e `forward_folder`
-2. Use os valores reais nos lugares onde o texto mencionar `_reversa_sdd/` ou `_reversa_forward/`
+1. Read `.reversa/state.json` to resolve `output_folder` and `forward_folder`
+2. Use the actual values where this text mentions `_reversa_sdd/` or `_reversa_forward/`
 
-## Âncora de contexto: legado ou greenfield
+## Context anchor: legacy or greenfield
 
-Esse skill **EXIGE** uma âncora de contexto em `_reversa_sdd/`, senão os dois artefatos centrais (`legacy-impact.md` e `regression-watch.md`) perdem o valor e o ciclo forward vira um framework genérico qualquer. Duas âncoras são válidas:
+This skill **REQUIRES** a context anchor in `_reversa_sdd/`, otherwise the two central artifacts (`legacy-impact.md` and `regression-watch.md`) lose their value and the forward cycle becomes just another generic framework. Two anchors are valid:
 
-1. **Legado:** `_reversa_sdd/` contém `architecture.md` E `domain.md` (extração do Time de Descoberta via `/reversa`). Comportamento clássico.
-2. **Greenfield:** `_reversa_sdd/` contém `prd.md` E pelo menos uma spec em `_reversa_sdd/sdd/` (artefatos do `/reversa-new`). Projeto novo é caso válido, o pipeline não bloqueia por ausência da extração. Os artefatos do skill se adaptam conforme descrito nas seções de geração.
+1. **Legacy:** `_reversa_sdd/` contains `architecture.md` AND `domain.md` (Discovery Team extraction via `/reversa`). Classic behavior.
+2. **Greenfield:** `_reversa_sdd/` contains `prd.md` AND at least one spec in `_reversa_sdd/sdd/` (`/reversa-new` artifacts). New project is a valid case, the pipeline does not block due to absence of extraction. The skill artifacts adapt as described in the generation sections.
 
-Se existirem as duas âncoras (projeto que rodou `/reversa` e `/reversa-new`), use a de legado como principal e as specs SDD como complemento.
+If both anchors exist (project that ran `/reversa` and `/reversa-new`), use the legacy anchor as primary and the SDD specs as complement.
 
-A verificação continua estrita quando NENHUMA âncora existe: o skill aborta com mensagem clara, NÃO oferece opção de prosseguir mesmo assim, NÃO escreve nada em disco.
+Verification remains strict when NO anchor exists: the skill aborts with a clear message, does NOT offer an option to proceed anyway, does NOT write anything to disk.
 
-## Verificações Iniciais
+## Initial verifications
 
-1. Leia `.reversa/active-requirements.json`
-   1.1. Se ausente, aborte com mensagem apontando `/reversa-requirements`
-2. Verifique a existência de `feature-dir/actions.md`
-   2.1. Se ausente, aborte com mensagem apontando `/reversa-to-do`
-3. Verifique a âncora de contexto:
-   3.1. **Âncora de legado:** `_reversa_sdd/` existe E contém `architecture.md` E `domain.md`. Se satisfeita, registre internamente o cenário como **legado** e siga para o passo 4.
-   3.2. **Âncora greenfield:** `_reversa_sdd/` existe E contém `prd.md` E pelo menos um arquivo `.md` em `_reversa_sdd/sdd/`. Se satisfeita (e a de legado não), registre o cenário como **greenfield**, informe ao usuário ("Sem extração de legado, vou ancorar nos artefatos do `/reversa-new`: `prd.md` e specs SDD.") e siga para o passo 4.
-   3.3. Se NENHUMA das duas âncoras estiver satisfeita, aborte com a mensagem:
+1. Read `.reversa/active-requirements.json`
+   1.1. If absent, abort with a message pointing to `/reversa-requirements`
+2. Verify the existence of `feature-dir/actions.md`
+   2.1. If absent, abort with a message pointing to `/reversa-to-do`
+3. Verify the context anchor:
+   3.1. **Legacy anchor:** `_reversa_sdd/` exists AND contains `architecture.md` AND `domain.md`. If satisfied, internally register the scenario as **legacy** and proceed to step 4.
+   3.2. **Greenfield anchor:** `_reversa_sdd/` exists AND contains `prd.md` AND at least one `.md` file in `_reversa_sdd/sdd/`. If satisfied (and the legacy one is not), register the scenario as **greenfield**, inform the user ("No legacy extraction found, I will anchor on `/reversa-new` artifacts: `prd.md` and SDD specs.") and proceed to step 4.
+   3.3. If NEITHER anchor is satisfied, abort with the message:
 
-       > 🛑 `/reversa-coding` exige uma âncora de contexto em `_reversa_sdd/` e não encontrei nenhuma:
+       > 🛑 `/reversa-coding` requires a context anchor in `_reversa_sdd/` and I found none:
        >
-       > - **Legado:** `architecture.md` + `domain.md` (gere com `/reversa`)
-       > - **Greenfield:** `prd.md` + specs em `sdd/` (gere com `/reversa-new`)
+       > - **Legacy:** `architecture.md` + `domain.md` (generate with `/reversa`)
+       > - **Greenfield:** `prd.md` + specs in `sdd/` (generate with `/reversa-new`)
        >
-       > Sem esse contexto, `legacy-impact.md` e `regression-watch.md` ficariam sem âncora e o ciclo forward perderia seu diferencial. Rode um dos dois pipelines e volte para cá.
+       > Without this context, `legacy-impact.md` and `regression-watch.md` would lack an anchor and the forward cycle would lose its differentiator. Run one of the two pipelines and come back here.
 
-   3.4. No caso do passo 3.3, NÃO crie `legacy-impact.md`, NÃO crie `regression-watch.md`, NÃO toque em `actions.md`, NÃO escreva `progress.jsonl`. Apenas relate e encerre.
+   3.4. In the case of step 3.3, do NOT create `legacy-impact.md`, do NOT create `regression-watch.md`, do NOT touch `actions.md`, do NOT write `progress.jsonl`. Just report and finish.
 
-4. Aplique `before-coding` da forma padrão
+4. Apply `before-coding` in the standard way
 
-## Escopo da rodada
+## Round scope
 
-1. Se o argumento livre indicar fase ou intervalo de IDs (ex.: "só Núcleo", "T001-T005"), restrinja a execução a esse escopo
-2. Caso contrário, execute em ordem todas as ações `[ ]` ainda não concluídas
+1. If the free argument indicates a phase or ID range (e.g., "only Core", "T001-T005"), restrict execution to that scope
+2. Otherwise, execute in order all `[ ]` actions not yet completed
 
-## Loop de execução por fase
+## Execution loop per phase
 
-Para cada fase, na ordem Preparação, Testes, Núcleo, Integração, Polimento:
+For each phase, in order Preparation, Tests, Core, Integration, Polish:
 
-1. Selecione todas as ações da fase com status `[ ]`
-2. Calcule o conjunto independente (ações sem dependência aberta)
-3. Para o conjunto independente, identifique sub-conjunto marcado `[//]`
-   3.1. Execute esse sub-conjunto pensando em cada ação como bloco coerente, mas relate à parte
-4. Execute as demais ações do conjunto sequencialmente
-5. Após cada ação:
-   5.1. Atualize `feature-dir/actions.md` mudando `[ ]` para `[X]`
-   5.2. Escreva linha em `feature-dir/progress.jsonl` com timestamp ISO 8601, ID da ação, status final, arquivos tocados
-6. Se uma ação falhar:
-   6.1. Mantenha `[ ]` no actions
-   6.2. Registre `status: failed` no progress
-   6.3. Pare a fase e relate ao usuário
+1. Select all actions in the phase with status `[ ]`
+2. Calculate the independent set (actions with no open dependency)
+3. For the independent set, identify the subset marked `[//]`
+   3.1. Execute this subset thinking of each action as a coherent block, but report separately
+4. Execute the remaining actions in the set sequentially
+5. After each action:
+   5.1. Update `feature-dir/actions.md` changing `[ ]` to `[X]`
+   5.2. Write a line in `feature-dir/progress.jsonl` with ISO 8601 timestamp, action ID, final status, files touched
+6. If an action fails:
+   6.1. Keep `[ ]` in actions
+   6.2. Record `status: failed` in progress
+   6.3. Stop the phase and report to the user
 
-## Geração do legacy-impact.md
+## Generating legacy-impact.md
 
-Após executar (mesmo que parcialmente):
+After executing (even if partially):
 
-**Cenário greenfield:** não há legado para impactar. Gere o arquivo mesmo assim, com adaptações: mapeie cada arquivo criado ao componente correspondente das specs em `_reversa_sdd/sdd/` (em vez de `architecture.md`), use o tipo de impacto `componente-novo` para tudo, e registre no cabeçalho: "Feature greenfield, sem legado pré-existente. Âncora: prd.md + specs SDD." As seções "Preservadas" e "Modificadas" ficam vazias com essa nota. Pule os passos 4 e 5 abaixo.
+**Greenfield scenario:** there is no legacy to impact. Generate the file anyway, with adaptations: map each created file to the corresponding component from the specs in `_reversa_sdd/sdd/` (instead of `architecture.md`), use the impact type `new-component` for everything, and record in the header: "Greenfield feature, no pre-existing legacy. Anchor: prd.md + SDD specs." The "Preserved" and "Modified" sections remain empty with this note. Skip steps 4 and 5 below.
 
-**Cenário legado:**
+**Legacy scenario:**
 
-1. Para cada arquivo do projeto tocado, mapeie ao componente correspondente em `_reversa_sdd/architecture.md` quando possível
-2. Para cada componente afetado, classifique o tipo de impacto: `regra-alterada`, `regra-removida`, `regra-nova`, `componente-novo`, `componente-extinto`, `delta-de-dados`, `delta-de-contrato-externo`
-3. Atribua severidade alinhada com `/reversa-audit` (CRITICAL, HIGH, MEDIUM, LOW)
-4. Liste regras 🟢 do `_reversa_sdd/domain.md` que continuam intactas (vão para a seção "Preservadas")
-5. Liste regras 🟢 que foram alteradas ou removidas (vão para a seção "Modificadas")
+1. For each project file touched, map to the corresponding component in `_reversa_sdd/architecture.md` when possible
+2. For each affected component, classify the impact type: `rule-altered`, `rule-removed`, `rule-new`, `new-component`, `component-extinct`, `data-delta`, `external-contract-delta`
+3. Assign severity aligned with `/reversa-audit` (CRITICAL, HIGH, MEDIUM, LOW)
+4. List 🟢 rules from `_reversa_sdd/domain.md` that remain intact (go to the "Preserved" section)
+5. List 🟢 rules that were altered or removed (go to the "Modified" section)
 
-Estrutura do arquivo:
+File structure:
 
-1. Cabeçalho com data e identificador da feature
-2. Tabela `Arquivo afetado | Componente | Tipo | Severidade | Justificativa`
-3. Diff conceitual por componente, em prosa
-4. Seção "Preservadas"
-5. Seção "Modificadas"
+1. Header with date and feature identifier
+2. Table `Affected file | Component | Type | Severity | Justification`
+3. Conceptual diff per component, in prose
+4. "Preserved" section
+5. "Modified" section
 
-Grave em `feature-dir/legacy-impact.md` com escrita atômica, rewrite completo.
+Write to `feature-dir/legacy-impact.md` with atomic writing, full rewrite.
 
-## Geração do regression-watch.md
+## Generating regression-watch.md
 
-**Cenário greenfield:** não há regras 🟢 para vigiar (nada foi extraído de código existente ainda). Gere o arquivo com a estrutura padrão, watch principal vazio, e registre os RFs implementados (das specs SDD) na seção "Observações", sem peso de regressão. Eles ganham peso quando uma futura extração `/reversa` sobre o código novo os confirmar como 🟢. Pule os passos 1 a 4 abaixo (o passo 5, IDs estáveis, vale para as observações).
+**Greenfield scenario:** there are no 🟢 rules to watch (nothing was extracted from existing code yet). Generate the file with the standard structure, main watch empty, and record the implemented RFs (from SDD specs) in the "Notes" section, without regression weight. They gain weight when a future `/reversa` extraction on the new code confirms them as 🟢. Skip steps 1 through 4 below (step 5, stable IDs, applies to the notes).
 
-**Cenário legado:**
+**Legacy scenario:**
 
-1. Para cada regra na seção "Modificadas" do `legacy-impact.md`, gere um watch item
-2. Para regras explicitamente removidas, gere watch item do tipo `ausência`
-3. Para regras alteradas, gere watch item do tipo `redação` ou `presença` conforme o caso
-4. Para regras com confidência rebaixada, gere watch item do tipo `confidência`
-5. Atribua ID estável `W001`, `W002`, ..., reciclando IDs antigos do arquivo se já existir
+1. For each rule in the "Modified" section of `legacy-impact.md`, generate a watch item
+2. For rules explicitly removed, generate a watch item of type `absence`
+3. For rules altered, generate a watch item of type `wording` or `presence` as appropriate
+4. For rules with downgraded confidence, generate a watch item of type `confidence`
+5. Assign stable IDs `W001`, `W002`, ..., recycling old IDs from the file if it already exists
 
-Estrutura:
+Structure:
 
-1. Cabeçalho com identificador da feature
-2. Tabela `ID | Origem (arquivo, seção) | Regra esperada após mudança | Tipo de verificação | Sinal de violação`
-3. Seção "Histórico de re-extrações" inicialmente vazia, será preenchida pelo agente reverso quando rodar `/reversa` de novo
-4. Seção "Arquivadas" inicialmente vazia
+1. Header with feature identifier
+2. Table `ID | Origin (file, section) | Expected rule after change | Verification type | Violation signal`
+3. "Re-extraction history" section initially empty, will be filled by the reverse agent when `/reversa` runs again
+4. "Archived" section initially empty
 
-NUNCA inclua no watch principal regras que originalmente eram 🟡 ou 🔴, essas vão para uma seção "Observações" sem peso de regressão.
+NEVER include in the main watch rules that were originally 🟡 or 🔴, those go to a "Notes" section without regression weight.
 
-Grave em `feature-dir/regression-watch.md`. A primeira execução cria o arquivo; execuções seguintes fazem append nas seções de itens novos, jamais reescrevendo histórico ou IDs antigos.
+Write to `feature-dir/regression-watch.md`. The first execution creates the file; subsequent executions append to the new items sections, never rewriting history or old IDs.
 
-## Atualização do progress.jsonl
+## Updating progress.jsonl
 
-Cada linha deve ter, no mínimo:
+Each line must have, at minimum:
 
 ```json
 {"ts":"2026-05-05T16:30:00Z","action":"T003","status":"done","files":["src/x/y.js"]}
 ```
 
-Append-only. Jamais reescreva linhas anteriores, mesmo se descobrir que ficaram erradas. Para corrigir, adicione nova linha `status: corrected` com o ID alvo.
+Append-only. Never rewrite previous lines, even if you discover they were wrong. To correct, add a new line `status: corrected` with the target ID.
 
-## Ganchos Pós-execução
+## Post-execution hooks
 
-Aplique `after-coding` da forma padrão.
+Apply `after-coding` in the standard way.
 
-## Relatório final ao usuário
+## Final report to the user
 
-1. Quantas ações executadas com sucesso
-2. Quantas falharam (se houver)
-3. Caminho absoluto de `actions.md`, `progress.jsonl`, `legacy-impact.md`, `regression-watch.md`
-4. Quantos watch items foram criados nessa rodada
-5. Aviso explícito: rode `/reversa-sync` para converger a entrega em `_reversa_sdd/addenda/` e mantenha no radar rodar `/reversa` (re-extração) novamente em algum momento futuro para fechar o ciclo
-6. Se a execução foi parcial, indique a próxima fase ou ação pendente
+1. How many actions executed successfully
+2. How many failed (if any)
+3. Absolute path of `actions.md`, `progress.jsonl`, `legacy-impact.md`, `regression-watch.md`
+4. How many watch items were created in this round
+5. Explicit notice: run `/reversa-sync` to converge the delivery into `_reversa_sdd/addenda/` and keep in mind running `/reversa` (re-extraction) again at some future point to close the cycle
+6. If execution was partial, indicate the next pending phase or action
 
-NUNCA dispare a re-extração sozinho, isso é decisão do usuário.
+NEVER trigger the re-extraction on your own, that is the user's decision.
 
-Termine com:
+End with:
 
-> Digite **CONTINUAR** para prosseguir com `/reversa-sync` (convergência da entrega na extração) ou outra ação que o usuário quiser.
+> Type **CONTINUE** to proceed with `/reversa-sync` (delivery convergence into the extraction) or another action the user wants.

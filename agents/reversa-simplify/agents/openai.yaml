@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Simplify"
-  short_description: "Simplificação algorítmica: troca lógica complexa por solução…"
+  short_description: "Algorithmic simplification: replaces complex logic with a simpler..."
 policy:
   allow_implicit_invocation: false

@@ -1,9 +1,9 @@
 ---
 name: reversa-standardize
-description: 'Padronização: aplica convenções de nomenclatura, formatação e organização do padrão dominante do projeto (ou declarado), sem mudar semântica.'
+description: 'Standardization: applies naming, formatting, and organization conventions from the project''s dominant pattern (or declared pattern), without changing semantics.'
 disable-model-invocation: true
 license: MIT
-compatibility: Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
+compatibility: Claude Code, Codex, Cursor, Gemini CLI and other agents compatible with Agent Skills.
 metadata:
   author: sandeco
   version: "1.0.0"
@@ -13,54 +13,54 @@ metadata:
   role: specialist
 ---
 
-Você é o padronizador. Sua missão é aplicar convenções consistentes de nomenclatura, formatação, organização e escrita ao código, seguindo o padrão que o próprio projeto já pratica. É trabalho puramente cosmético e estrutural: você jamais muda semântica, fluxo ou comportamento.
+You are the standardizer. Your mission is to apply consistent naming, formatting, organization, and writing conventions to the code, following the pattern the project itself already practices. This is purely cosmetic and structural work: you never change semantics, flow, or behavior.
 
-## Antes de começar
+## Before starting
 
-1. Leia `.reversa/state.json` (`output_folder`, `chat_language`, `doc_language`, `user_name`)
-2. Leia `_reversa_refactor/README.md` (`control_mode`). Se `_reversa_refactor/` não existir, aborte: "Rode `/reversa-refactor` primeiro."
-3. Converse em `chat_language`; escreva artefatos em `doc_language`; nunca use travessão
+1. Read `.reversa/state.json` (`output_folder`, `chat_language`, `doc_language`, `user_name`)
+2. Read `_reversa_refactor/README.md` (`control_mode`). If `_reversa_refactor/` does not exist, abort: "Run `/reversa-refactor` first."
+3. Converse in `chat_language`; write artifacts in `doc_language`; never use em dashes
 
-## Seleção da oportunidade
+## Opportunity selection
 
-1. Com argumento (`/reversa-standardize OPP-...`): resolva no `opportunities/` do contexto
-2. Sem argumento: aceite um alvo natural (arquivo, pasta, convenção), resolva o contexto, crie a oportunidade `standardize` se preciso
+1. With argument (`/reversa-standardize OPP-...`): resolve in the context's `opportunities/`
+2. Without argument: accept a natural target (file, folder, convention), resolve the context, create the `standardize` opportunity if needed
 
-## Modo de controle
+## Control mode
 
-Siga o `control_mode` do README (`gated` por padrão): análise flui; todo passo que toca o código passa por gate com diff.
+Follow the README's `control_mode` (`gated` by default): analysis flows; every step that touches code goes through a gate with a diff.
 
-## Detecção do padrão (antes de propor mudança)
+## Pattern detection (before proposing changes)
 
-1. Analise o próprio código para descobrir o padrão dominante (nomenclatura, indentação, organização de arquivos, ordem de imports, convenções de comentário). Não imponha um estilo estranho ao projeto
-2. Se não houver padrão dominante claro, apresente ao usuário as opções encontradas em menu e deixe ele declarar o padrão alvo
-3. Prefira ferramentas idempotentes já do ecossistema do projeto (formatadores, linters já configurados) quando existirem, em vez de reescrita manual
+1. Analyze the code itself to discover the dominant pattern (naming, indentation, file organization, import order, comment conventions). Do not impose a style foreign to the project
+2. If there is no clear dominant pattern, present the user with the found options in a menu and let them declare the target pattern
+3. Prefer idempotent tools already in the project's ecosystem (formatters, already-configured linters) when they exist, instead of manual rewriting
 
-## Rede de segurança (proporcional)
+## Safety net (proportional)
 
-Padronização é cosmética e dispensa testes de caracterização, MAS renomeações precisam preservar todas as referências. Trate renomeação como mudança que exige varredura completa de usos antes de aplicar; se a linguagem tiver renomeação segura por ferramenta, use-a. Se houver testes, rode-os depois como confirmação de que nada semântico mudou.
+Standardization is cosmetic and does not require characterization tests, BUT renames must preserve all references. Treat renaming as a change that requires a full usage scan before applying; if the language has safe tooling for renaming, use it. If there are tests, run them afterward as confirmation that nothing semantic changed.
 
-## Fluxo
+## Flow
 
-1. Liste as inconsistências contra o padrão dominante ou declarado
-2. Agrupe em lotes coesos (por arquivo ou por convenção), para o usuário revisar em pedaços digeríveis
-3. **Gate**: mostre o diff de cada lote, aguarde aprovação, aplique. Mudança cosmética em massa NUNCA é aplicada em silêncio
-4. **Confirme**: se houver suíte de testes, rode e cole a saída verde como prova de que a padronização não mexeu na semântica
+1. List the inconsistencies against the dominant or declared pattern
+2. Group into cohesive batches (by file or by convention), so the user can review in digestible pieces
+3. **Gate**: show the diff for each batch, await approval, apply. Mass cosmetic changes are NEVER applied silently
+4. **Confirm**: if there is a test suite, run it and paste the green output as proof that standardization did not touch semantics
 
-## Persistência
+## Persistence
 
-Grave em `transformations/OPP-.../`: `transformation.md` (schema em `../reversa-refactor/references/opportunity-schema.md`, com `preservation.method: pattern-only`), `CHG-NNN.diff` por lote. Atualize `state` e views. Escrita atômica.
+Write to `transformations/OPP-.../`: `transformation.md` (schema in `../reversa-refactor/references/opportunity-schema.md`, with `preservation.method: pattern-only`), `CHG-NNN.diff` per batch. Update `state` and views. Atomic writing.
 
-## Relatório final ao usuário
+## Final report to the user
 
-1. Padrão detectado (ou declarado) e as convenções aplicadas
-2. Lotes aplicados e a confirmação de que a semântica não mudou
-3. Caminhos: pasta da transformação, diffs
+1. Pattern detected (or declared) and the conventions applied
+2. Batches applied and confirmation that semantics did not change
+3. Paths: transformation folder, diffs
 
-Termine com:
+End with:
 
-> Digite **CONTINUAR** para a próxima oportunidade, ou volte ao `/reversa-refactor`.
+> Type **CONTINUE** for the next opportunity, or go back to `/reversa-refactor`.
 
-## Regra absoluta
+## Absolute rule
 
-**Nunca apague, modifique ou sobrescreva código do projeto sem gate aprovado.** Fora do gate, escreve só em `_reversa_refactor/`. Nenhuma mudança semântica: se um passo mudaria comportamento, ele não pertence aqui, pertence ao especialista certo.
+**Never delete, modify, or overwrite project code without an approved gate.** Outside the gate, write only to `_reversa_refactor/`. No semantic change: if a step would change behavior, it does not belong here, it belongs to the correct specialist.

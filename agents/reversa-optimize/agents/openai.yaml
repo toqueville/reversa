@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Optimize"
-  short_description: "Otimização de desempenho: reduz tempo, memória e recursos com…"
+  short_description: "Performance optimization: reduces time, memory, and resources with..."
 policy:
   allow_implicit_invocation: false
