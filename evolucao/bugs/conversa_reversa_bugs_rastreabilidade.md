@@ -1,26 +1,25 @@
-# Conversa: Documentação e Rastreabilidade de Bugs para Agentes LLM
+# Conversation: Bug Documentation and Traceability for LLM Agents
 
-**Contexto:** Discussão entre Sandeco e ChatGPT sobre uma arquitetura de
-documentação de bugs orientada a Codex, Claude Code, SDD e agentes do
-Reversa.
+**Context:** Discussion between Sandeco and ChatGPT about a bug documentation
+architecture oriented toward Codex, Claude Code, SDD, and Reversa agents.
 
 ------------------------------------------------------------------------
 
 ## Sandeco
 
-Qual a melhor forma de documentar bugs para que as LLMs no Codex e
-Claude Code possam documentar e/ou depois corrigir? Quero estrutura de
-pastas, nome de arquivos e etc.
+What is the best way to document bugs so that LLMs in Codex and
+Claude Code can document and/or later fix them? I want folder structure,
+file names, etc.
 
 ------------------------------------------------------------------------
 
 ## ChatGPT
 
-Sandeco, para **Codex + Claude Code**, eu faria um sistema de bugs
-**dentro do próprio repositório, orientado a arquivos Markdown e
-explicitamente projetado para agentes**.
+Sandeco, for **Codex + Claude Code**, I would create a bug system
+**within the repository itself, oriented toward Markdown files and
+explicitly designed for agents**.
 
-Minha recomendação:
+My recommendation:
 
 ``` text
 project/
@@ -49,9 +48,9 @@ project/
 └── src/
 ```
 
-## Eu chamaria simplesmente de `/bugs`
+## I would simply call it `/bugs`
 
-Não usaria:
+I would not use:
 
 ``` text
 docs/bugs/
@@ -60,30 +59,30 @@ problems/
 errors/
 ```
 
-Para agente, **semântica explícita vence elegância arquitetural**.
+For agents, **explicit semantics beats architectural elegance**.
 
 ``` text
 bugs/
 ```
 
-é impossível de interpretar errado.
+is impossible to misinterpret.
 
-## O arquivo de bug
+## The bug file
 
-Eu criaria **um bug por arquivo**.
+I would create **one bug per file**.
 
-Exemplo:
+Example:
 
 ``` text
 BUG-002-video-black-screen.md
 ```
 
-Conteúdo:
+Content:
 
 ``` markdown
 ---
 id: BUG-002
-title: Tela preta ao iniciar vídeo
+title: Black screen when starting video
 status: open
 severity: high
 priority: P1
@@ -93,28 +92,28 @@ component: video-player
 reproducible: always
 ---
 
-# Tela preta ao iniciar vídeo
+# Black screen when starting video
 
 ## Summary
 
-O player exibe uma tela preta quando o vídeo é iniciado pela primeira vez.
+The player displays a black screen when the video is started for the first time.
 
 ## Expected Behavior
 
-O primeiro frame do vídeo deve ser renderizado imediatamente após o carregamento.
+The first frame of the video should be rendered immediately after loading.
 
 ## Actual Behavior
 
-O player permanece preto.
+The player remains black.
 
-O áudio é reproduzido normalmente.
+Audio plays normally.
 
 ## Steps to Reproduce
 
-1. Iniciar a aplicação.
-2. Abrir um projeto existente.
-3. Selecionar um vídeo MP4.
-4. Pressionar Play.
+1. Start the application.
+2. Open an existing project.
+3. Select an MP4 video.
+4. Press Play.
 
 ## Reproduction Rate
 
@@ -135,23 +134,23 @@ O áudio é reproduzido normalmente.
 
 ## Suspected Area
 
-Possivelmente relacionado a:
+Possibly related to:
 
 - `src/video/player.ts`
 - `src/video/renderer.ts`
 
-Suspeita inicial: inicialização do renderer ocorre antes da disponibilidade do primeiro frame.
+Initial suspicion: renderer initialization occurs before the first frame is available.
 
 ## Acceptance Criteria
 
-- O primeiro frame deve aparecer antes da reprodução.
-- O vídeo não deve apresentar tela preta.
-- O áudio e vídeo devem permanecer sincronizados.
-- Os testes existentes devem continuar passando.
+- The first frame must appear before playback.
+- The video must not show a black screen.
+- Audio and video must remain synchronized.
+- Existing tests must continue passing.
 
 ## Verification
 
-Executar:
+Run:
 
 ```bash
 pytest
@@ -159,7 +158,7 @@ npm run test
 npm run lint
 ```
 
-Realizar também o fluxo manual descrito em `Steps to Reproduce`.
+Also perform the manual flow described in `Steps to Reproduce`.
 
 ## Resolution
 
@@ -167,19 +166,19 @@ Not resolved.
 
 ## Agent Notes
 
-Não alterar o pipeline de áudio.
+Do not alter the audio pipeline.
 
-Evitar refatoração ampla do player durante a correção deste bug.
+Avoid broad refactoring of the player during this bug fix.
 
 
-    ## A parte mais importante: YAML front matter
+    ## The most important part: YAML front matter
 
-    Isto:
+    This:
 
     ```yaml
     ---
     id: BUG-002
-    title: Tela preta ao iniciar vídeo
+    title: Black screen when starting video
     status: open
     severity: high
     priority: P1
@@ -189,35 +188,34 @@ Evitar refatoração ampla do player durante a correção deste bug.
     reproducible: always
     ---
 
-é **ouro para LLM**.
+is **gold for LLMs**.
 
-Você consegue mandar:
+You can send:
 
-> Corrija todos os bugs P1 abertos.
+> Fix all open P1 bugs.
 
-O agente pode procurar:
+The agent can search for:
 
 ``` yaml
 status: open
 priority: P1
 ```
 
-Ou:
+Or:
 
-> Analise todos os bugs relacionados ao video-player.
+> Analyze all bugs related to video-player.
 
-Ele procura:
+It searches for:
 
 ``` yaml
 component: video-player
 ```
 
-Isso torna o seu sistema quase um **banco de dados baseado em
-Markdown**.
+This makes your system almost a **Markdown-based database**.
 
-## Status controlado
+## Controlled status
 
-Eu usaria **somente quatro estados**:
+I would use **only four states**:
 
 ``` text
 open
@@ -226,7 +224,7 @@ blocked
 resolved
 ```
 
-Nada de:
+None of:
 
 ``` text
 doing
@@ -238,9 +236,9 @@ analysis
 in-progress
 ```
 
-Quanto menor a ontologia, melhor para o agente.
+The smaller the ontology, the better for the agent.
 
-Pastas:
+Folders:
 
 ``` text
 bugs/open/
@@ -249,18 +247,18 @@ bugs/blocked/
 bugs/resolved/
 ```
 
-E o `status` precisa acompanhar a pasta.
+And the `status` must match the folder.
 
-## Prioridade e severidade são coisas diferentes
+## Priority and severity are different things
 
-Eu manteria as duas.
+I would keep both.
 
-  Campo        Significado
+  Field        Meaning
   ------------ ----------------------
-  `severity`   tamanho do estrago
-  `priority`   urgência de correção
+  `severity`   extent of the damage
+  `priority`   urgency of the fix
 
-### Severidade
+### Severity
 
 ``` text
 critical
@@ -269,7 +267,7 @@ medium
 low
 ```
 
-### Prioridade
+### Priority
 
 ``` text
 P0
@@ -278,7 +276,7 @@ P2
 P3
 ```
 
-## Evidências devem ficar separadas
+## Evidence should be kept separate
 
 ``` text
 bugs/
@@ -293,11 +291,11 @@ bugs/
 │       └── reproduction.mp4
 ```
 
-**Não enfie logs gigantes dentro do Markdown.**
+**Do not stuff giant logs inside the Markdown.**
 
-## O `bugs/index.md`
+## The `bugs/index.md`
 
-Eu manteria um índice **gerado automaticamente**.
+I would maintain an **automatically generated** index.
 
 ``` markdown
 # Bug Index
@@ -322,87 +320,86 @@ Last updated: 2026-07-13
 | BUG-003 | P2 | medium | cache | Invalid cache |
 ```
 
-`index.md` não é source of truth. O source of truth é cada `BUG-XXX.md`.
+`index.md` is not the source of truth. The source of truth is each `BUG-XXX.md`.
 
 ## `bugs/README.md`
 
-O README define o registro canônico, lifecycle, regras dos agentes,
-protocolo de resolução e convenção de nomes.
+The README defines the canonical record, lifecycle, agent rules,
+resolution protocol, and naming conventions.
 
-## Codex e Claude Code
+## Codex and Claude Code
 
-No `AGENTS.md`, definir que o registro canônico está em `/bugs`, exigir
-leitura do `bugs/README.md`, reprodução do defeito, identificação da
-causa raiz, teste de regressão, menor correção coerente e atualização do
-documento.
+In `AGENTS.md`, define that the canonical record is in `/bugs`, require
+reading `bugs/README.md`, defect reproduction, root cause identification,
+regression testing, smallest coherent fix, and document update.
 
-No `CLAUDE.md`, definir o mesmo protocolo e impedir que um bug seja
-marcado como resolvido sem causa raiz, teste quando tecnicamente
-possível, verificação e critérios de aceitação satisfeitos.
+In `CLAUDE.md`, define the same protocol and prevent a bug from being
+marked as resolved without root cause, test when technically possible,
+verification, and acceptance criteria satisfied.
 
-## Dois workflows
+## Two workflows
 
 ``` text
 /bug
 /fix-bug
 ```
 
-Conceitualmente:
+Conceptually:
 
 ``` text
 /bug
     ↓
-investiga a descrição do usuário
+investigates the user's description
     ↓
-procura duplicata
+searches for duplicates
     ↓
-coleta evidências
+collects evidence
     ↓
-cria BUG-XXX.md
+creates BUG-XXX.md
     ↓
-NÃO CORRIGE
+DOES NOT FIX
 ```
 
-E:
+And:
 
 ``` text
 /fix-bug BUG-002
     ↓
-lê bug
+reads bug
     ↓
-reproduz
+reproduces
     ↓
-identifica root cause
+identifies root cause
     ↓
-cria regression test
+creates regression test
     ↓
-corrige
+fixes
     ↓
-verifica
+verifies
     ↓
-documenta resolução
+documents resolution
     ↓
-move para resolved
+moves to resolved
 ```
 
-**Separaria brutalmente `documentar bug` de `corrigir bug`.**
+**I would brutally separate `documenting a bug` from `fixing a bug`.**
 
 ------------------------------------------------------------------------
 
 ## Sandeco
 
-E como organizar por feature, ou subsistema ou módulo etc? Qual a melhor
-forma?
+And how to organize by feature, subsystem, or module, etc.? What is the best
+approach?
 
 ------------------------------------------------------------------------
 
 ## ChatGPT
 
-**Eu não organizaria a pasta física por feature, módulo ou subsistema.**
+**I would not organize the physical folder by feature, module, or subsystem.**
 
-Minha recomendação é:
+My recommendation is:
 
-> **status na estrutura de pastas; domínio técnico nos metadados.**
+> **status in the folder structure; technical domain in metadata.**
 
 ``` text
 bugs/
@@ -412,12 +409,12 @@ bugs/
 └── resolved/
 ```
 
-No bug:
+In the bug:
 
 ``` yaml
 ---
 id: BUG-042
-title: Timeline perde sincronismo após seek
+title: Timeline loses sync after seek
 status: open
 priority: P1
 severity: high
@@ -435,7 +432,7 @@ labels:
 ---
 ```
 
-A hierarquia inicialmente proposta foi:
+The initially proposed hierarchy was:
 
 ``` text
 system
@@ -445,14 +442,14 @@ system
                     └── component
 ```
 
-Mas bugs frequentemente atravessam múltiplos módulos. Além disso, o
-diagnóstico pode mudar. Por isso, a classificação arquitetural deve
-permanecer em metadados, e não determinar a localização física do
-arquivo.
+But bugs frequently cross multiple modules. Additionally, the
+diagnosis may change. Therefore, the architectural classification should
+remain in metadata, and not determine the physical location of the
+file.
 
-## Separar `affected` de `root_cause`
+## Separate `affected` from `root_cause`
 
-Antes da investigação:
+Before investigation:
 
 ``` yaml
 affected:
@@ -464,7 +461,7 @@ affected:
     - playback
 ```
 
-Depois:
+After:
 
 ``` yaml
 root_cause:
@@ -474,15 +471,15 @@ root_cause:
   component: frame-cache
 ```
 
-Existe uma diferença fundamental entre **onde o bug aparece** e **onde o
-bug nasceu**.
+There is a fundamental difference between **where the bug appears** and **where the
+bug originated**.
 
-## Catálogo de arquitetura
+## Architecture catalog
 
-Foi sugerido um `bugs/taxonomy.yaml` para impedir que agentes inventem
-nomes inconsistentes de sistemas, módulos e features.
+A `bugs/taxonomy.yaml` was suggested to prevent agents from inventing
+inconsistent names for systems, modules, and features.
 
-Regra:
+Rule:
 
 ``` markdown
 Architecture classification fields MUST use values defined in
@@ -498,17 +495,17 @@ the proposed taxonomy change in Agent Notes.
 
 ## Sandeco
 
-Mas a gente tem que ter cuidado para nao ficar uma árvore muito grande
-de pastas.
+But we have to be careful not to end up with a very large
+folder tree.
 
 ------------------------------------------------------------------------
 
 ## ChatGPT
 
-Exatamente. **Eu reduziria bastante.**
+Exactly. **I would reduce it considerably.**
 
-Para LLM, árvore profunda costuma piorar navegação, aumentar ambiguidade
-e exigir mais buscas. Eu usaria no máximo **2 níveis úteis**.
+For LLMs, deep trees tend to worsen navigation, increase ambiguity,
+and require more searches. I would use at most **2 useful levels**.
 
 ``` text
 bugs/
@@ -520,9 +517,9 @@ bugs/
 └── evidence/
 ```
 
-Só isso.
+That is all.
 
-Os bugs:
+The bugs:
 
 ``` text
 bugs/open/BUG-042-timeline-desync.md
@@ -530,8 +527,8 @@ bugs/open/BUG-043-export-crash.md
 bugs/active/BUG-018-memory-leak.md
 ```
 
-A organização por feature, módulo ou subsistema fica **inteiramente no
-front matter**:
+The organization by feature, module, or subsystem stays **entirely in
+the front matter**:
 
 ``` yaml
 ---
@@ -547,15 +544,15 @@ severity: high
 ---
 ```
 
-## Ontologia simplificada
+## Simplified ontology
 
-  Campo       Função
+  Field       Function
   ----------- -------------------------
-  `area`      grande área do produto
-  `module`    parte técnica principal
-  `feature`   funcionalidade afetada
+  `area`      major product area
+  `module`    main technical part
+  `feature`   affected functionality
 
-Exemplo:
+Example:
 
 ``` yaml
 area: rendering
@@ -563,7 +560,7 @@ module: animated-typing
 feature: cursor
 ```
 
-Para bugs transversais:
+For cross-cutting bugs:
 
 ``` yaml
 areas:
@@ -577,7 +574,7 @@ modules:
 feature: seek
 ```
 
-A recomendação consolidada foi:
+The consolidated recommendation was:
 
 ``` text
 bugs/
@@ -589,7 +586,7 @@ bugs/
 └── evidence/
 ```
 
-Com classificação:
+With classification:
 
 ``` yaml
 area:
@@ -597,22 +594,22 @@ module:
 feature:
 ```
 
-**Status é navegação; arquitetura é metadata.**
+**Status is navigation; architecture is metadata.**
 
 ------------------------------------------------------------------------
 
 ## Sandeco
 
-Ah, e todo bug deve ser rastreavel ligando o codigo ou códigos
-(arquivos) as specs
+Ah, and every bug must be traceable, linking the code or codes
+(files) to the specs.
 
 ------------------------------------------------------------------------
 
 ## ChatGPT
 
-**Isso muda a arquitetura do bug tracking.** O bug não deve ser só um
-relato de defeito. Ele deve funcionar como um **nó de rastreabilidade
-entre SPEC ↔ código ↔ teste ↔ correção**.
+**This changes the bug tracking architecture.** The bug should not just be a
+defect report. It should function as a **traceability node
+between SPEC <-> code <-> test <-> fix**.
 
 ``` text
 SPEC
@@ -626,14 +623,14 @@ FIX
 TEST
 ```
 
-Com links bidirecionais sempre que possível.
+With bidirectional links whenever possible.
 
-## Estrutura do bug
+## Bug structure
 
 ``` yaml
 ---
 id: BUG-042
-title: Timeline perde sincronismo após seek
+title: Timeline loses sync after seek
 status: open
 
 area: editor
@@ -659,7 +656,7 @@ fixed_by: null
 ---
 ```
 
-A ideia central:
+The central idea:
 
 ``` text
 BUG-042
@@ -669,9 +666,9 @@ BUG-042
 └── tests[]
 ```
 
-**Sempre plural.**
+**Always plural.**
 
-## Seção explícita de rastreabilidade
+## Explicit traceability section
 
 ``` markdown
 ## Traceability
@@ -698,11 +695,11 @@ BUG-042
 → `seek.test.ts`
 ```
 
-Não é apenas uma lista de arquivos. É a **cadeia causal esperada**.
+It is not just a list of files. It is the **expected causal chain**.
 
-## Código afetado versus causa raiz
+## Affected code versus root cause
 
-Antes:
+Before:
 
 ``` yaml
 affected_code:
@@ -712,7 +709,7 @@ affected_code:
 root_cause_code: []
 ```
 
-Depois:
+After:
 
 ``` yaml
 affected_code:
@@ -722,7 +719,7 @@ root_cause_code:
   - src/rendering/frame-buffer.ts
 ```
 
-Formato recomendado:
+Recommended format:
 
 ``` yaml
 traceability:
@@ -739,7 +736,7 @@ traceability:
     - tests/editor/timeline/seek.test.ts
 ```
 
-## Regra dura no `bugs/README.md`
+## Hard rule in `bugs/README.md`
 
 ``` markdown
 ## Traceability Rule
@@ -762,21 +759,20 @@ as `spec-gap` and the missing specification must be created or updated before
 resolution.
 ```
 
-A sacada é o `spec-gap`.
+The key insight is `spec-gap`.
 
-Se o agente encontra um bug e não consegue ligá-lo a uma SPEC:
+If the agent finds a bug and cannot link it to a SPEC:
 
 ``` yaml
 labels:
   - spec-gap
 ```
 
-Surge a pergunta:
+The question arises:
 
-> **É um bug ou o comportamento nunca foi especificado?**
+> **Is it a bug, or was the behavior never specified?**
 
-Um bug só pode ser `resolved` quando fechar o quadrado de
-rastreabilidade:
+A bug can only be `resolved` when the traceability square is closed:
 
 ``` text
 ┌──────── SPEC ────────┐
@@ -786,38 +782,38 @@ CODE                  BUG
 └──────── TEST ────────┘
 ```
 
-**SPEC define. Código implementa. Bug denuncia a divergência. Teste
-prova que a divergência foi eliminada.**
+**SPEC defines. Code implements. Bug exposes the divergence. Test
+proves the divergence has been eliminated.**
 
 ------------------------------------------------------------------------
 
 ## Sandeco
 
-Eu acho importante uma matriz de rastrabilidade entre bugs, uma matriz
-que mostraria a relação entre os bugs. Faz sentido?
+I think a traceability matrix between bugs is important, a matrix
+that would show the relationships between bugs. Does that make sense?
 
 ------------------------------------------------------------------------
 
 ## ChatGPT
 
-Faz **muito sentido**. Ela pode ser ainda mais valiosa para LLMs do que
-para humanos.
+It makes **a lot of sense**. It can be even more valuable for LLMs than
+for humans.
 
-A ideia é representar que bugs podem estar:
+The idea is to represent that bugs can be:
 
 ``` text
-BUG-012 ── causa ───────► BUG-031
-BUG-018 ── relacionado ──► BUG-024
-BUG-021 ── bloqueia ─────► BUG-022
-BUG-040 ── duplica ──────► BUG-017
-BUG-052 ── regressão de ─► BUG-009
+BUG-012 ── causes ──────► BUG-031
+BUG-018 ── related to ──► BUG-024
+BUG-021 ── blocks ───────► BUG-022
+BUG-040 ── duplicates ───► BUG-017
+BUG-052 ── regression of ► BUG-009
 ```
 
-Isso impede o agente de tratar cada bug como uma ilha.
+This prevents the agent from treating each bug as an island.
 
-## Relações tipadas
+## Typed relationships
 
-Não apenas:
+Not just:
 
 ``` yaml
 related_bugs:
@@ -825,7 +821,7 @@ related_bugs:
   - BUG-031
 ```
 
-Mas:
+But:
 
 ``` yaml
 relationships:
@@ -839,28 +835,28 @@ relationships:
     type: regression-of
 ```
 
-Ontologia pequena:
+Small ontology:
 
-  Relação            Significado
+  Relationship           Meaning
   ------------------ ---------------------------------------
-  `related-to`       relação genérica
-  `caused-by`        causado por outro bug
-  `causes`           causa outro bug
-  `blocks`           impede a correção
-  `blocked-by`       depende de outro bug
-  `duplicate-of`     duplicata
-  `regression-of`    comportamento voltou
-  `conflicts-with`   correções potencialmente conflitantes
+  `related-to`       generic relationship
+  `caused-by`        caused by another bug
+  `causes`           causes another bug
+  `blocks`           prevents the fix
+  `blocked-by`       depends on another bug
+  `duplicate-of`     duplicate
+  `regression-of`    behavior returned
+  `conflicts-with`   potentially conflicting fixes
 
-## A matriz
+## The matrix
 
-Arquivo:
+File:
 
 ``` text
 bugs/relationships.md
 ```
 
-Exemplo:
+Example:
 
   Bug           BUG-012     BUG-018      BUG-021   BUG-031
   ------------- ----------- ------------ --------- ---------
@@ -869,11 +865,11 @@ Exemplo:
   **BUG-021**   ---         blocked-by   ---       ---
   **BUG-031**   caused-by   ---          ---       ---
 
-A matriz **não deve ser source of truth**.
+The matrix **should not be the source of truth**.
 
-O source of truth continua sendo cada `BUG-XXX.md`.
+The source of truth remains each `BUG-XXX.md`.
 
-A matriz deve ser gerada automaticamente:
+The matrix should be generated automatically:
 
 ``` text
 BUG files
@@ -883,7 +879,7 @@ parser
 relationships.md
 ```
 
-## Duas views
+## Two views
 
 ``` text
 bugs/
@@ -893,7 +889,7 @@ bugs/
 
 ### `matrix.md`
 
-Boa para comparação sistemática.
+Good for systematic comparison.
 
 ### `graph.md`
 
@@ -912,9 +908,9 @@ BUG018 -->|blocks| BUG021
 BUG012 ---|related| BUG018
 ```
 
-O grafo pode permitir que uma LLM perceba clusters.
+The graph can allow an LLM to perceive clusters.
 
-Exemplo:
+Example:
 
 ``` text
 BUG-012
@@ -924,14 +920,14 @@ BUG-012
    └── related BUG-018
 ```
 
-Conclusão possível:
+Possible conclusion:
 
-> "Não faz sentido corrigir BUG-031 e BUG-044 isoladamente. BUG-012
-> parece ser o defeito estrutural."
+> "It does not make sense to fix BUG-031 and BUG-044 in isolation. BUG-012
+> appears to be the structural defect."
 
 ## Bug Impact Score
 
-Exemplo conceitual:
+Conceptual example:
 
 ``` text
 impact =
@@ -941,13 +937,13 @@ impact =
 + related_bugs
 ```
 
-Um agente poderia receber:
+An agent could receive:
 
-> Corrija o bug aberto com maior impacto sistêmico.
+> Fix the open bug with the greatest systemic impact.
 
-Isso é mais inteligente do que simplesmente corrigir o P1 mais antigo.
+This is smarter than simply fixing the oldest P1.
 
-## Estrutura consolidada
+## Consolidated structure
 
 ``` text
 bugs/
@@ -961,7 +957,7 @@ bugs/
 └── evidence/
 ```
 
-Cada bug:
+Each bug:
 
 ``` yaml
 ---
@@ -995,7 +991,7 @@ traceability:
 ---
 ```
 
-A rastreabilidade foi organizada em três dimensões:
+Traceability was organized into three dimensions:
 
 ``` text
 1. VERTICAL
@@ -1008,31 +1004,31 @@ BUG ↔ BUG
 BUG → FIX → REGRESSION
 ```
 
-Isso cria quase um **knowledge graph de defeitos do software**.
+This creates almost a **software defect knowledge graph**.
 
-A documentação de bugs passa a funcionar como uma **memória causal de
-falhas para agentes de software**.
+Bug documentation becomes a **causal failure memory for
+software agents**.
 
 ------------------------------------------------------------------------
 
 ## Sandeco
 
-Poderia ser agentes do Reversa não é?
+These could be Reversa agents, right?
 
 ------------------------------------------------------------------------
 
 ## ChatGPT
 
-**Exatamente. E isso encaixa melhor no Reversa do que como um sistema
-isolado.**
+**Exactly. And this fits better in Reversa than as an
+isolated system.**
 
-O Reversa já faz:
+Reversa already does:
 
 ``` text
 CODE → SPEC
 ```
 
-Os agentes de bugs poderiam ampliar para:
+The bug agents could expand to:
 
 ``` text
           ┌── BUG ──┐
@@ -1042,21 +1038,21 @@ CODE ──► SPEC ◄──► TEST
   └──── ROOT CAUSE ─┘
 ```
 
-Agentes especializados:
+Specialized agents:
 
-  Agente                 Função
+  Agent                  Function
   ---------------------- ---------------------------------------------
-  **Bug Registrar**      transforma relato/evidência em `BUG-XXX.md`
-  **Bug Tracer**         liga BUG ↔ SPEC ↔ CODE ↔ TEST
-  **Bug Correlator**     encontra relações BUG ↔ BUG
-  **Root Cause Agent**   investiga causa raiz
-  **Spec Gap Agent**     detecta comportamento sem SPEC
-  **Bug Graph Agent**    gera matriz, grafo e clusters
-  **Bug Prioritizer**    calcula impacto sistêmico
+  **Bug Registrar**      transforms report/evidence into `BUG-XXX.md`
+  **Bug Tracer**         links BUG <-> SPEC <-> CODE <-> TEST
+  **Bug Correlator**     finds relationships BUG <-> BUG
+  **Root Cause Agent**   investigates root cause
+  **Spec Gap Agent**     detects behavior without SPEC
+  **Bug Graph Agent**    generates matrix, graph, and clusters
+  **Bug Prioritizer**    calculates systemic impact
 
-A parte especialmente interessante é o `Bug Correlator`.
+The especially interesting part is the `Bug Correlator`.
 
-Ele poderia ler todos os bugs e descobrir:
+It could read all bugs and discover:
 
 ``` text
 BUG-012 → frame-buffer
@@ -1065,15 +1061,15 @@ BUG-044 → frame-buffer
 BUG-052 → frame-buffer
 ```
 
-E concluir:
+And conclude:
 
-> "Quatro bugs aparentemente distintos convergem para o mesmo componente
-> e para a mesma cadeia de SPECs. Há evidência de uma causa estrutural
-> comum."
+> "Four apparently distinct bugs converge on the same component
+> and the same chain of SPECs. There is evidence of a common structural
+> cause."
 
-Isso é **engenharia reversa da falha**.
+This is **reverse engineering of failure**.
 
-No Reversa, poderia existir conceitualmente:
+In Reversa, there could conceptually exist:
 
 ``` text
 /reversa-bug
@@ -1082,27 +1078,27 @@ No Reversa, poderia existir conceitualmente:
 /reversa-bug-graph
 ```
 
-Ou um único comando:
+Or a single command:
 
 ``` text
 /reversa-bug
 ```
 
-com um **loop multiagente interno**.
+with an **internal multi-agent loop**.
 
-A feature central identificada foi:
+The central feature identified was:
 
-> **O Reversa não apenas reconstrói a intenção do software pelo código.
-> Ele pode reconstruir a topologia causal das falhas.**
+> **Reversa not only reconstructs the software's intent from code.
+> It can reconstruct the causal topology of failures.**
 
 ------------------------------------------------------------------------
 
-# Síntese conceitual consolidada
+# Consolidated conceptual synthesis
 
-A proposta evoluiu de um simples diretório `/bugs` para uma arquitetura
-de **memória causal de defeitos orientada a agentes**.
+The proposal evolved from a simple `/bugs` directory to an architecture
+of **agent-oriented causal defect memory**.
 
-## Estrutura rasa
+## Shallow structure
 
 ``` text
 bugs/
@@ -1116,16 +1112,16 @@ bugs/
 └── evidence/
 ```
 
-## Organização
+## Organization
 
--   **Status** determina a pasta.
--   **Área, módulo e feature** ficam em metadados.
--   Cada bug é um arquivo Markdown independente.
--   O YAML front matter permite busca e processamento determinístico.
--   O arquivo do bug é o source of truth.
--   Índices, matrizes e grafos são views geradas.
+-   **Status** determines the folder.
+-   **Area, module, and feature** go in metadata.
+-   Each bug is an independent Markdown file.
+-   The YAML front matter enables deterministic search and processing.
+-   The bug file is the source of truth.
+-   Indexes, matrices, and graphs are generated views.
 
-## Três dimensões de rastreabilidade
+## Three dimensions of traceability
 
 ``` text
 VERTICAL:   SPEC ↔ CODE ↔ TEST ↔ BUG
@@ -1133,17 +1129,17 @@ HORIZONTAL: BUG ↔ BUG
 TEMPORAL:   BUG → FIX → REGRESSION
 ```
 
-## Papel do Reversa
+## Role of Reversa
 
 ``` text
 CODE → SPEC
 ```
 
-e, com os agentes de bugs:
+and, with the bug agents:
 
 ``` text
 CODE ↔ SPEC ↔ BUG ↔ TEST ↔ ROOT CAUSE
 ```
 
-O resultado conceitual é uma **topologia causal das falhas do
-software**, mantida e explorada por agentes especializados do Reversa.
+The conceptual result is a **causal topology of software
+failures**, maintained and explored by specialized Reversa agents.

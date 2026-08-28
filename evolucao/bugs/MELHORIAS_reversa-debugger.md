@@ -1,150 +1,150 @@
-# Melhorias no Reversa para tornar o /reversa-debugger mais efetivo
+# Improvements to Reversa to make /reversa-debugger more effective
 
-> Post-mortem acionável escrito a partir do caso `mira-studio-full`, onde o
-> `/reversa-debugger` fechou 8 bugs como "fixed" e ainda assim entregou uma
-> gravação que nunca funcionou no navegador. O objetivo aqui não é o caso, é o
-> processo: o que mudar no framework para que isso não se repita em nenhuma feature.
+> Actionable post-mortem written from the `mira-studio-full` case, where
+> `/reversa-debugger` closed 8 bugs as "fixed" and still delivered a
+> recording that never worked in the browser. The goal here is not the case, it is the
+> process: what to change in the framework so that this does not repeat for any feature.
 
 ## TL;DR
 
-O debugger não falhou por diagnosticar mal. Falhou no **gate de fechamento**: aceitou
-"verde sintético" como prova de conserto numa feature que só pode ser provada no
-navegador real, e deixou um achado crítico de inspeção ser fechado mesmo depois de
-ele dizer "não feche". As melhorias abaixo endurecem exatamente esses dois pontos.
+The debugger did not fail by diagnosing poorly. It failed at the **closure gate**: it accepted
+"synthetic green" as proof of fix for a feature that can only be proven in a
+real browser, and let a critical inspection finding be closed even after
+it said "do not close". The improvements below harden exactly these two points.
 
 ---
 
-## A causa raiz, em uma frase
+## The root cause, in one sentence
 
-**Nada no laço do debugger tocou a realidade da feature uma única vez.** A gravação é
-100% runtime de navegador (`getDisplayMedia`, Element Capture, WebCodecs, muxer). O
-harness rodava num sandbox sem navegador. Sem realidade no laço, todo teste degenerou
-em regex sobre o código-fonte, e "verde" passou a provar que o código *contém* linhas,
-não que a feature *funciona*. A partir daí tudo desce em cascata:
+**Nothing in the debugger loop touched the reality of the feature a single time.** The recording is
+100% browser runtime (`getDisplayMedia`, Element Capture, WebCodecs, muxer). The
+harness ran in a sandbox without a browser. Without reality in the loop, every test degenerated
+into regex on source code, and "green" came to prove that the code *contains* lines,
+not that the feature *works*. From there everything cascades down:
 
-1. Teste vira regex sobre fonte, não comportamento.
-2. Closure policy `local-software` aceita esse verde como `fixed`.
-3. O oráculo errado embarca sem contestação.
-4. O fail-closed realoca o sintoma (vídeo preto vira "gravação morre ao iniciar") e ainda passa verde.
-5. O pente-fino diagnostica certo, mas o gate fecha o bug por cima dele.
-
----
-
-## Melhoria 1: classe de verificação "browser-only" na closure policy
-
-**Problema.** A política `local-software` fecha bug com "regressão verde + veredito". Para
-features de runtime de navegador (captura de tela, mídia, WebCodecs, WebGPU, canvas,
-áudio), verde de teste em Node não prova nada. No caso, o `DONE.md` do CGU3 rebaixou a
-prova real a "confirmação recomendada, não bloqueia o fechamento". Esse é exatamente o buraco.
-
-**Mudança.** Criar uma classe de closure `browser-runtime` que **exige um artefato real**
-antes de aceitar `fixed`. Para a gravação isso seria o MP4 1920x1080 com o `.fmt-frame`,
-ou o `window.__miraLastRecordingDiagnostics` capturado de uma tentativa real. Enquanto o
-artefato não existir, o estado máximo do bug é `awaiting-human-verification`, nunca `fixed`.
-
-**Regra prática.** No intake, o escrivão classifica a feature. Se ela depende de API que
-o harness não consegue executar (lista explícita: mídia, captura, GPU, permissões nativas,
-File System Access), o bug nasce marcado `verification: browser-runtime` e herda a closure
-mais estrita. O corretor pode propor o diff, mas quem fecha é a evidência binária do usuário.
-
-## Melhoria 2: achado crítico de inspeção BLOQUEIA o fechamento
-
-**Problema.** O pente-fino de 17/07 cravou F-conformidade-01 (critical) e escreveu, com
-todas as letras, "o veredito de spec do CGU3 não deveria ser aceito enquanto o oráculo não
-seguir RF-05". No dia seguinte o `/reversa-debugger-fix` fechou o CGU3 assim mesmo. O
-diagnóstico estava certo e o gate simplesmente passou por cima.
-
-**Mudança.** Um achado com `suspected_severity: critical` e `promoted_to` apontando para um
-bug ativo vira um **bloqueio duro**: aquele bug não pode receber `DONE.md` enquanto o achado
-não for explicitamente resolvido ou rebaixado, com justificativa registrada. O fechamento
-precisa referenciar o `finding_id` e dizer por que ele não vale mais. Silêncio não fecha.
-
-## Melhoria 3: proibir "teste de presença de string" como prova de comportamento
-
-**Problema.** `recording-health.test.cjs` e `recording-oracle.test.cjs` liam o `.js` como
-texto e casavam regex. Provaram que o código fail-closed *existe*, não que a gravação
-funciona. A suíte golden frame-a-frame (RF-13 da própria spec) nunca foi implementada, e
-foi justamente por isso que a regressão que desabilita a gravação embarcou "verde".
-
-**Mudança.** O corretor deve rotular cada teste que escreve como `static` (regex/AST sobre
-fonte) ou `behavioral` (executa o caminho e observa o efeito). Um bug de comportamento
-**não pode** ser fechado só com testes `static`. Se a spec define uma suíte de comportamento
-(como o RF-13 golden) e ela não existe, isso é uma pendência que bloqueia o `fixed`, não uma
-"observação de cobertura" que fica no rodapé do relatório.
-
-## Melhoria 4: fail-closed que muda o sintoma não é conserto
-
-**Problema.** O CGU3 fez o pipeline rejeitar `encoded === 0`. Isso transformou "vídeo preto"
-em "a gravação morre logo após iniciar". O defeito foi realocado, não resolvido, e mesmo
-assim foi fechado. Foi isso que "acabou com a feature".
-
-**Mudança.** Quando a correção é fail-closed (passa a abortar em vez de produzir saída ruim),
-o corretor é obrigado a responder por escrito: "qual é o caminho feliz que agora produz saída
-CORRETA, e onde está a prova dele?". Fail-closed sem um caminho feliz provado é contenção de
-dano, e o bug fica `mitigated`, nunca `fixed`. São estados diferentes e o usuário precisa ver
-a diferença.
-
-## Melhoria 5: cuidado com o veredito "spec-desatualizada"
-
-**Observação honesta.** Neste caso o adendo do CGU3 (`spec-desatualizada`) estava
-tecnicamente correto: trocou "getSettings tem que ser 16:9" por "leia frames até chegar um na
-proporção da sessão", raciocinando bem a partir da documentação das APIs. Ou seja, o mecanismo
-de adendo versionado e imutável funcionou como projetado. **Mas** a feature continuou quebrada
-depois dele, porque a nova lógica também nunca rodou no Chrome.
-
-**Risco a vigiar.** `spec-desatualizada` é o veredito mais perigoso do debugger, porque ele
-faz o "erro" desaparecer no papel: reescreve a régua até o código passar. Aqui foi usado com
-integridade, mas o processo precisa de um freio para quando não for. Sugestão: todo veredito
-`spec-desatualizada` numa feature `browser-runtime` só vale **depois** da evidência real que a
-Melhoria 1 exige. Mudar a spec e fechar o bug no mesmo passo, sem tocar a realidade, é a
-combinação que produz "documento perfeito, feature morta".
-
-## Melhoria 6: gate de integração acima do gate por bug
-
-**Problema.** Cada um dos 8 bugs foi fechado e travado em isolamento (`DONE.md` = pasta
-somente-leitura). O fix do MILD trouxe o `WIDE`/`discardMismatch`; o fix do CGU3 trouxe o
-oráculo bloqueante. Cada um "pronto" localmente, enquanto a gravação inteira nunca funcionou
-de ponta a ponta. Ninguém perguntou "a feature toda grava?".
-
-**Mudança.** Quando N bugs compartilham a mesma feature (mesmo contexto agregador), o último a
-fechar dispara um **gate de integração**: um teste único de ponta a ponta da feature (aqui:
-"aperta gravar, para, e sai um MP4 correto"). Nenhum `DONE.md` do grupo é definitivo enquanto
-esse gate não tiver uma passada real registrada. Bugs fechados em sequência não somam a uma
-feature que funciona.
-
-## Melhoria 7: o intake deve capturar "isso já funcionou alguma vez?"
-
-**Problema.** O `mira-record.js` do deck era o arquivo herdado do 9:16 remendado com flags
-(`__miraFormat`, `__miraElemCapture`). Os dois caminhos brigavam dentro do mesmo arquivo, e a
-diretriz de "mudança cirúrgica" empurrou o debugger para condicional-em-cima-de-condicional em
-vez do fork limpo (`mira-record-16x9.js` dedicado) que resolveu de fato na pasta separada.
-
-**Mudança.** No intake, uma pergunta obrigatória: "essa feature já funcionou nesse deck alguma
-vez, ou está sendo construída agora?". Se a resposta é "nunca funcionou", o problema não é
-*bug* (regressão de algo que andava), é *feature incompleta*, e o caminho certo pode ser
-reescrita/fork, não remendo cirúrgico. O debugger é bom em consertar regressão; ele não deveria
-tentar *terminar de construir* uma feature via correções cirúrgicas sucessivas.
+1. Test becomes regex on source, not behavior.
+2. Closure policy `local-software` accepts this green as `fixed`.
+3. The wrong oracle ships without contestation.
+4. The fail-closed relocates the symptom (black video becomes "recording dies on start") and still passes green.
+5. The fine-tooth inspection diagnoses correctly, but the gate closes the bug over it.
 
 ---
 
-## Por que a pasta separada deu certo (a lição de fundo)
+## Improvement 1: "browser-only" verification class in the closure policy
 
-A versão perfeita evoluiu com **você como o navegador no laço**: a pasta `updates/` mostra
-iteração viva contra a API real, apertando gravar no Chrome a cada volta. O feedback do mundo
-real substituiu o verde sintético do sandbox, e a separação em `mira-record-16x9.js` matou a
-briga de flags.
+**Problem.** The `local-software` policy closes a bug with "green regression + verdict". For
+browser runtime features (screen capture, media, WebCodecs, WebGPU, canvas,
+audio), green tests in Node prove nothing. In this case, the CGU3 `DONE.md` downgraded the
+real proof to "recommended confirmation, does not block closure". That is exactly the hole.
 
-Nenhuma das melhorias acima tenta "colocar um navegador dentro do reversa". A conclusão é mais
-simples: **quando a verdade da feature só existe no navegador, o humano é parte não-opcional do
-gate.** O papel do framework é parar de esconder isso atrás de verde sintético e passar a exigir
-a evidência real, alto e claro, antes de escrever `fixed`.
+**Change.** Create a closure class `browser-runtime` that **requires a real artifact**
+before accepting `fixed`. For recording this would be the MP4 1920x1080 with the `.fmt-frame`,
+or the `window.__miraLastRecordingDiagnostics` captured from a real attempt. As long as the
+artifact does not exist, the maximum state of the bug is `awaiting-human-verification`, never `fixed`.
 
-## Resumo das mudanças, em ordem de impacto
+**Practical rule.** At intake, the registrar classifies the feature. If it depends on an API that
+the harness cannot execute (explicit list: media, capture, GPU, native permissions,
+File System Access), the bug is born marked `verification: browser-runtime` and inherits the stricter
+closure. The fixer can propose the diff, but what closes it is the binary evidence from the user.
 
-1. Closure class `browser-runtime` que exige artefato real antes de `fixed` (Melhoria 1).
-2. Achado crítico de inspeção bloqueia o fechamento do bug (Melhoria 2).
-3. Testes rotulados `static` vs `behavioral`; `static` não fecha bug de comportamento (Melhoria 3).
-4. Fail-closed sem caminho feliz provado = `mitigated`, não `fixed` (Melhoria 4).
-5. `spec-desatualizada` em feature browser-runtime só vale após evidência real (Melhoria 5).
-6. Gate de integração da feature acima dos gates por bug (Melhoria 6).
-7. Intake distingue "regressão" de "feature nunca funcionou" e evita remendo onde cabe fork (Melhoria 7).
+## Improvement 2: critical inspection finding BLOCKS closure
+
+**Problem.** The fine-tooth inspection on 07/17 nailed F-conformity-01 (critical) and wrote, in
+full words, "the spec verdict of CGU3 should not be accepted while the oracle does not
+follow RF-05". The next day `/reversa-debugger-fix` closed CGU3 anyway. The
+diagnosis was correct and the gate simply overrode it.
+
+**Change.** A finding with `suspected_severity: critical` and `promoted_to` pointing to an
+active bug becomes a **hard block**: that bug cannot receive `DONE.md` while the finding
+is not explicitly resolved or downgraded, with recorded justification. The closure
+must reference the `finding_id` and state why it no longer applies. Silence does not close.
+
+## Improvement 3: prohibit "string presence test" as proof of behavior
+
+**Problem.** `recording-health.test.cjs` and `recording-oracle.test.cjs` read the `.js` as
+text and matched regex. They proved that the fail-closed code *exists*, not that the recording
+works. The golden frame-by-frame suite (RF-13 from the spec itself) was never implemented, and
+it was precisely because of this that the regression that disables recording shipped "green".
+
+**Change.** The fixer must label each test it writes as `static` (regex/AST on
+source) or `behavioral` (executes the path and observes the effect). A behavior bug
+**cannot** be closed with only `static` tests. If the spec defines a behavioral suite
+(like RF-13 golden) and it does not exist, that is a blocker for `fixed`, not an
+"observation about coverage" that goes in the report footer.
+
+## Improvement 4: fail-closed that changes the symptom is not a fix
+
+**Problem.** CGU3 made the pipeline reject `encoded === 0`. This transformed "black video"
+into "the recording dies right after starting". The defect was relocated, not resolved, and even
+so it was closed. This is what "killed the feature".
+
+**Change.** When the fix is fail-closed (aborts instead of producing bad output),
+the fixer is required to answer in writing: "what is the happy path that now produces
+CORRECT output, and where is the proof of it?". Fail-closed without a proven happy path is damage
+containment, and the bug stays `mitigated`, never `fixed`. These are different states and the user needs to see
+the difference.
+
+## Improvement 5: caution with the "outdated-spec" verdict
+
+**Honest observation.** In this case, the CGU3 addendum (`outdated-spec`) was
+technically correct: it replaced "getSettings must be 16:9" with "read frames until one arrives in
+the session's aspect ratio", reasoning well from the API documentation. In other words, the mechanism
+of versioned and immutable addenda worked as designed. **But** the feature remained broken
+after it, because the new logic also never ran in Chrome.
+
+**Risk to watch.** `outdated-spec` is the most dangerous verdict of the debugger, because it
+makes the "error" disappear on paper: it rewrites the ruler until the code passes. Here it was used with
+integrity, but the process needs a brake for when it is not. Suggestion: every
+`outdated-spec` verdict on a `browser-runtime` feature only takes effect **after** the real evidence that
+Improvement 1 requires. Changing the spec and closing the bug in the same step, without touching reality, is the
+combination that produces "perfect document, dead feature".
+
+## Improvement 6: integration gate above the per-bug gate
+
+**Problem.** Each of the 8 bugs was closed and locked in isolation (`DONE.md` = read-only
+folder). The MILD fix brought `WIDE`/`discardMismatch`; the CGU3 fix brought the
+blocking oracle. Each one "ready" locally, while the entire recording never worked
+end to end. Nobody asked "does the whole feature record?".
+
+**Change.** When N bugs share the same feature (same aggregating context), the last one to
+close triggers an **integration gate**: a single end-to-end test of the feature (here:
+"press record, stop, and a correct MP4 comes out"). No `DONE.md` from the group is definitive while
+this gate has not had a real passing run recorded. Bugs closed in sequence do not sum up to a
+feature that works.
+
+## Improvement 7: intake should capture "has this ever worked?"
+
+**Problem.** The `mira-record.js` from the deck was the file inherited from 9:16, patched with flags
+(`__miraFormat`, `__miraElemCapture`). The two paths clashed within the same file, and the
+"surgical change" directive pushed the debugger toward conditional-on-top-of-conditional instead
+of the clean fork (`mira-record-16x9.js` dedicated) that actually solved it in the separate folder.
+
+**Change.** At intake, a mandatory question: "has this feature ever worked in this deck,
+or is it being built now?". If the answer is "never worked", the problem is not a
+*bug* (regression of something that was working), it is an *incomplete feature*, and the right path may be
+rewrite/fork, not surgical patching. The debugger is good at fixing regressions; it should not
+try to *finish building* a feature via successive surgical fixes.
+
+---
+
+## Why the separate folder worked (the underlying lesson)
+
+The perfect version evolved with **you as the browser in the loop**: the `updates/` folder shows
+live iteration against the real API, pressing record in Chrome on each pass. The feedback from the real
+world replaced the synthetic green from the sandbox, and the separation into `mira-record-16x9.js` killed the
+flag clash.
+
+None of the improvements above tries to "put a browser inside reversa". The conclusion is simpler:
+**when the truth of the feature only exists in the browser, the human is a non-optional part of the
+gate.** The role of the framework is to stop hiding this behind synthetic green and to start requiring
+the real evidence, loud and clear, before writing `fixed`.
+
+## Summary of changes, in order of impact
+
+1. Closure class `browser-runtime` that requires a real artifact before `fixed` (Improvement 1).
+2. Critical inspection finding blocks bug closure (Improvement 2).
+3. Tests labeled `static` vs `behavioral`; `static` does not close a behavior bug (Improvement 3).
+4. Fail-closed without a proven happy path = `mitigated`, not `fixed` (Improvement 4).
+5. `outdated-spec` on a browser-runtime feature only takes effect after real evidence (Improvement 5).
+6. Feature integration gate above the per-bug gates (Improvement 6).
+7. Intake distinguishes "regression" from "feature never worked" and avoids patching where forking is appropriate (Improvement 7).

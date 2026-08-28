@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// Smoke test do transporte de marcas pelo installer.
+// Smoke test for the installer's mark transport.
 //
-// O installer (lib/installer/writer.js) instala cada skill com
-// cpSync(src, dest, { recursive: true }). Este teste exercita esse mesmo
-// mecanismo numa pasta temporária e confirma que as DUAS marcas do eixo de
-// invocação sobrevivem à cópia — a flag disable-model-invocation no SKILL.md
-// e o policy.allow_implicit_invocation no agents/openai.yaml. É o que garante
-// que a economia de contexto vale também na máquina do usuário, não só na fonte.
+// The installer (lib/installer/writer.js) installs each skill with
+// cpSync(src, dest, { recursive: true }). This test exercises that same
+// mechanism in a temporary folder and confirms that BOTH invocation axis
+// marks survive the copy — the disable-model-invocation flag in SKILL.md
+// and policy.allow_implicit_invocation in agents/openai.yaml. This ensures
+// that the context savings also apply on the user's machine, not just at the source.
 import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const SKILL = 'reversa-scout'; // user-invoked representativo
+const SKILL = 'reversa-scout'; // representative user-invoked skill
 const src = join(ROOT, 'agents', SKILL);
 
 const tmp = mkdtempSync(join(tmpdir(), 'reversa-transport-'));
@@ -25,16 +25,16 @@ try {
 
   const skill = readFileSync(join(dest, 'SKILL.md'), 'utf8');
   check(/^disable-model-invocation:\s*true\s*$/m.test(skill),
-    'flag disable-model-invocation atravessou para o SKILL.md instalado');
+    'disable-model-invocation flag carried over to the installed SKILL.md');
 
   const yaml = readFileSync(join(dest, 'agents', 'openai.yaml'), 'utf8');
   check(/^\s*allow_implicit_invocation:\s*false\s*$/m.test(yaml),
-    'policy.allow_implicit_invocation atravessou no agents/openai.yaml instalado');
+    'policy.allow_implicit_invocation carried over in the installed agents/openai.yaml');
   check(/display_name:/.test(yaml),
-    'interface.display_name presente no openai.yaml instalado');
+    'interface.display_name present in the installed openai.yaml');
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
 
-console.log(failures ? `\nRESULTADO: ✗ ${failures} falha(s)` : '\nRESULTADO: ✓ transporte íntegro');
+console.log(failures ? `\nRESULT: ✗ ${failures} failure(s)` : '\nRESULT: ✓ transport intact');
 process.exit(failures ? 1 : 0);

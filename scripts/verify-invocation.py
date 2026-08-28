@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """
-Verificador do eixo de invocação do Reversa (árvore-fonte única `agents/`).
+Reversa invocation axis verifier (single source tree `agents/`).
 
-Toda skill é user-invoked ou model-invoked, sem terceiro estado. O verificador
-garante que as duas marcas do eixo estão em lockstep DENTRO de cada skill:
+Every skill is either user-invoked or model-invoked, with no third state. The
+verifier ensures that both axis marks are in lockstep WITHIN each skill:
 
-  - Claude Code : disable-model-invocation: true        no SKILL.md
-  - Codex       : policy.allow_implicit_invocation: false  em agents/openai.yaml
+  - Claude Code : disable-model-invocation: true        in SKILL.md
+  - Codex       : policy.allow_implicit_invocation: false  in agents/openai.yaml
 
-Uma skill é user-invoked nos dois harnesses ou em nenhum. Este é o repositório
-FONTE (árvore única); o installer replica cada skill por cópia recursiva, então
-a paridade entre `.claude/skills` e `.agents/skills` na máquina do usuário é
-estrutural — o que precisa de guarda aqui é o eixo, não a igualdade entre árvores.
+A skill is user-invoked in both harnesses or in neither. This is the SOURCE
+repository (single tree); the installer replicates each skill via recursive copy,
+so parity between `.claude/skills` and `.agents/skills` on the user's machine is
+structural — what needs guarding here is the axis, not equality between trees.
 
-Uso:  scripts/verify-invocation.py [<dir-de-skills>]   (padrão: agents)
-Sai com código 1 se houver qualquer violação (serve de gate de CI).
+Usage:  scripts/verify-invocation.py [<skills-dir>]   (default: agents)
+Exits with code 1 if any violation is found (serves as a CI gate).
 """
 import re, sys, pathlib
 
-# Assinaturas de gatilho de MODELO — proibidas na description de user-invoked.
-# São enumerações de comandos/frases digitadas, não dicas de uso em prosa.
+# MODEL trigger signatures — forbidden in user-invoked descriptions.
+# These are enumerations of typed commands/phrases, not prose usage hints.
 TRIGGER_SIGS = ('digitar "', 'Use com "', 'Ative com ', 'pedir "')
 
 
@@ -31,35 +31,35 @@ def frontmatter(p):
 
 def check(raiz):
     raiz = pathlib.Path(raiz)
-    erros = []
+    errors = []
     skills = sorted(raiz.glob("*/SKILL.md"))
     if not skills:
-        return [f"{raiz}: nenhuma SKILL.md encontrada"], 0, 0
+        return [f"{raiz}: no SKILL.md found"], 0, 0
     n_user = 0
     for sk in skills:
         nome = sk.parent.name
         fm = frontmatter(sk)
         if fm is None:
-            erros.append(f"{nome}: SKILL.md sem frontmatter"); continue
+            errors.append(f"{nome}: SKILL.md missing frontmatter"); continue
 
         claude_user = bool(re.search(r"^disable-model-invocation:\s*true\s*$", fm, re.M))
 
         y = sk.parent / "agents" / "openai.yaml"
         if not y.exists():
-            erros.append(f"{nome}: falta agents/openai.yaml (marca do Codex ausente)")
+            errors.append(f"{nome}: missing agents/openai.yaml (Codex mark absent)")
             continue
         yt = y.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
         codex_user = bool(re.search(r"^\s*allow_implicit_invocation:\s*false\s*$", yt, re.M))
 
         if not re.search(r"^\s*display_name:", yt, re.M):
-            erros.append(f"{nome}: openai.yaml sem interface.display_name")
+            errors.append(f"{nome}: openai.yaml missing interface.display_name")
         if not re.search(r"^\s*short_description:", yt, re.M):
-            erros.append(f"{nome}: openai.yaml sem interface.short_description")
+            errors.append(f"{nome}: openai.yaml missing interface.short_description")
 
-        # LOCKSTEP: user-invoked nas duas marcas, ou em nenhuma.
+        # LOCKSTEP: user-invoked in both marks, or in neither.
         if claude_user != codex_user:
-            erros.append(
-                f"{nome}: DESCASAMENTO — Claude={'user' if claude_user else 'model'}-invoked, "
+            errors.append(
+                f"{nome}: MISMATCH — Claude={'user' if claude_user else 'model'}-invoked, "
                 f"Codex={'user' if codex_user else 'model'}-invoked")
 
         if claude_user:
@@ -69,31 +69,31 @@ def check(raiz):
                 desc = " ".join(d.group(1).split()).strip().strip("'\"")
                 hit = next((s for s in TRIGGER_SIGS if s in desc), None)
                 if hit:
-                    erros.append(
-                        f"{nome}: description de user-invoked ainda tem gatilho de modelo "
-                        f"(assinatura {hit!r}) — deve ser um resumo humano sem lista de gatilhos")
-    return erros, len(skills), n_user
+                    errors.append(
+                        f"{nome}: user-invoked description still has model trigger "
+                        f"(signature {hit!r}) — should be a human summary without trigger lists")
+    return errors, len(skills), n_user
 
 
 def main(dirs):
-    total_erros = 0
+    total_errors = 0
     for d in dirs:
-        erros, n, n_user = check(d)
+        errors, n, n_user = check(d)
         print(f"\n=== {d}")
         print(f"    {n} skills · {n_user} user-invoked · {n - n_user} model-invoked")
-        if erros:
-            print(f"    {len(erros)} violação(ões):")
-            for e in erros[:60]:
+        if errors:
+            print(f"    {len(errors)} violation(s):")
+            for e in errors[:60]:
                 print(f"      ✗ {e}")
-            if len(erros) > 60:
-                print(f"      … e mais {len(erros) - 60}")
+            if len(errors) > 60:
+                print(f"      … and {len(errors) - 60} more")
         else:
-            print("    ✓ eixo de invocação íntegro, 0 descasamentos")
-        total_erros += len(erros)
+            print("    ✓ invocation axis intact, 0 mismatches")
+        total_errors += len(errors)
 
     print("\n" + "=" * 60)
-    print("RESULTADO:", "✓ APROVADO" if total_erros == 0 else f"✗ {total_erros} violação(ões)")
-    return 1 if total_erros else 0
+    print("RESULT:", "✓ PASSED" if total_errors == 0 else f"✗ {total_errors} violation(s)")
+    return 1 if total_errors else 0
 
 
 if __name__ == "__main__":
