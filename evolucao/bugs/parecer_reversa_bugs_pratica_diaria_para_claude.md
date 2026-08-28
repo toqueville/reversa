@@ -1,55 +1,55 @@
-# Parecer de Arquitetura para Revisão do Reversa Bugs
+# Architecture Opinion for Reversa Bugs Review
 
-**Destinatário:** Claude  
-**Projeto:** Reversa Bugs  
-**Objetivo:** revisar o plano atual antes de qualquer implementação  
-**Base analisada:** `Reversa Bugs, Documento de Entendimento`, 15/07/2026  
-**Decisão:** não implementar a versão 1.2.52 antes de incorporar e avaliar os pontos abaixo
+**Recipient:** Claude
+**Project:** Reversa Bugs
+**Objective:** review the current plan before any implementation
+**Base analyzed:** `Reversa Bugs, Understanding Document`, 07/15/2026
+**Decision:** do not implement version 1.2.52 before incorporating and evaluating the points below
 
 ---
 
-## 1. Contexto
+## 1. Context
 
-O desenho atual do Reversa Bugs está conceitualmente forte em quatro aspectos:
+The current design of Reversa Bugs is conceptually strong in four aspects:
 
-1. separa registro, diagnóstico, decisão e correção;
-2. trata o bug como entidade de rastreabilidade entre `SPEC ↔ CODE ↔ TEST ↔ BUG`;
-3. cria memória causal de defeitos dentro do próprio repositório;
-4. propõe execução multi-engine e debate multiagente sem tornar um harness específico obrigatório.
+1. separates registration, diagnosis, decision, and correction;
+2. treats the bug as a traceability entity between `SPEC ↔ CODE ↔ TEST ↔ BUG`;
+3. creates causal defect memory within the repository itself;
+4. proposes multi-engine execution and multi-agent debate without making a specific harness mandatory.
 
-A arquitetura, porém, ainda está excessivamente orientada ao seguinte modelo mental:
+The architecture, however, is still excessively oriented toward the following mental model:
 
 ```text
-reproduzir
+reproduce
     ↓
-achar causa raiz
+find root cause
     ↓
-criar teste
+create test
     ↓
-corrigir código
+fix code
     ↓
-testes passam
+tests pass
     ↓
-veredito de spec
+spec verdict
     ↓
 resolved
 ```
 
-Esse fluxo representa bem **como um agente entende e corrige um defeito em código**.
+This flow represents well **how an agent understands and fixes a defect in code**.
 
-Ele ainda não representa completamente **como uma equipe moderna leva um defeito desde a descoberta até a correção comprovada no sistema real**.
+It does not yet fully represent **how a modern team takes a defect from discovery to proven correction in the real system**.
 
-O objetivo desta revisão é aproximar o Reversa Bugs da prática diária de manutenção de software sem destruir sua principal virtude: a rastreabilidade causal orientada a agentes.
+The objective of this review is to bring Reversa Bugs closer to the daily practice of software maintenance without destroying its main virtue: agent-oriented causal traceability.
 
 ---
 
-# 2. Nova premissa central
+# 2. New central premise
 
-O Reversa Bugs não deve modelar apenas um processo de **program repair**.
+Reversa Bugs should not model only a **program repair** process.
 
-Deve modelar o **ciclo de vida completo de um defeito**.
+It should model the **complete lifecycle of a defect**.
 
-O modelo de referência deve passar a ser:
+The reference model should become:
 
 ```text
 INTAKE
@@ -87,56 +87,56 @@ OBSERVE
 POSTMORTEM?
 ```
 
-Nem todo projeto terá todas essas etapas.
+Not every project will have all these stages.
 
-O Reversa deve detectar o contexto do repositório e adaptar o ciclo.
+Reversa should detect the repository context and adapt the cycle.
 
-Exemplos:
+Examples:
 
 ```text
-biblioteca local:
+local library:
 FIX → TEST → MERGE → RELEASE
 
-serviço em produção:
+production service:
 FIX → TEST → PR → CI → MERGE → DEPLOY → OBSERVE
 
-sistema legado sem CI:
-FIX → TEST LOCAL → APROVAÇÃO HUMANA → ENTREGA
+legacy system without CI:
+FIX → LOCAL TEST → HUMAN APPROVAL → DELIVERY
 
-incidente crítico:
+critical incident:
 MITIGATE → RESTORE → INVESTIGATE → FIX → DEPLOY → OBSERVE
 ```
 
-Portanto, o lifecycle precisa ser **configurável e contextual**, não um fluxo rígido único.
+Therefore, the lifecycle needs to be **configurable and contextual**, not a single rigid flow.
 
 ---
 
-# 3. Mudança obrigatória: separar mitigação de correção
+# 3. Mandatory change: separate mitigation from correction
 
-O plano atual parte quase imediatamente para reprodução e causa raiz.
+The current plan moves almost immediately to reproduction and root cause.
 
-Na prática, defeitos graves frequentemente exigem redução do dano antes da investigação.
+In practice, severe defects frequently require damage reduction before investigation.
 
-Exemplo:
-
-```text
-BUG: cobrança duplicada de clientes
-```
-
-A ação operacional correta pode ser:
+Example:
 
 ```text
-1. preservar evidências
-2. desligar a funcionalidade
-3. reduzir o blast radius
-4. aplicar rollback
-5. restaurar o serviço
-6. investigar a causa raiz
+BUG: duplicate customer billing
 ```
 
-Mitigação não é correção.
+The correct operational action may be:
 
-O schema do bug deve comportar explicitamente:
+```text
+1. preserve evidence
+2. disable the feature
+3. reduce the blast radius
+4. apply rollback
+5. restore the service
+6. investigate the root cause
+```
+
+Mitigation is not correction.
+
+The bug schema must explicitly accommodate:
 
 ```yaml
 mitigation:
@@ -148,7 +148,7 @@ mitigation:
   temporary: true
 ```
 
-Tipos possíveis, inicialmente:
+Initially possible types:
 
 ```text
 rollback
@@ -162,7 +162,7 @@ manual-procedure
 other
 ```
 
-O sistema deve distinguir:
+The system must distinguish:
 
 ```text
 MITIGATED
@@ -172,15 +172,15 @@ FIXED
 RESOLVED
 ```
 
-O bug pode permanecer `active` mesmo depois de o serviço ser restaurado.
+The bug can remain `active` even after the service is restored.
 
 ---
 
-# 4. O fix não deve ser modelado como "code diff + spec diff"
+# 4. The fix should not be modeled as "code diff + spec diff"
 
-Esta é uma limitação importante do desenho atual.
+This is an important limitation of the current design.
 
-Um defeito real pode ser corrigido por mudanças em:
+A real defect can be fixed by changes in:
 
 ```text
 CODE
@@ -198,18 +198,18 @@ SPECIFICATION
 DOCUMENTATION
 ```
 
-Portanto, substituir o conceito estreito de:
+Therefore, replace the narrow concept of:
 
 ```text
 code_diff
 spec_diff
 ```
 
-por:
+with:
 
 # `Correction Change Set`
 
-Exemplo:
+Example:
 
 ```yaml
 change_set:
@@ -239,9 +239,9 @@ change_set:
     purpose: update-effective-spec
 ```
 
-Cada item do `change_set` deve ser rastreável.
+Each item in the `change_set` must be traceable.
 
-Tipos iniciais recomendados:
+Recommended initial types:
 
 ```text
 test
@@ -260,38 +260,38 @@ documentation
 other
 ```
 
-O princípio é:
+The principle is:
 
-> Um bug não produz necessariamente um patch de código.  
-> Um bug produz um conjunto de mudanças corretivas rastreáveis.
+> A bug does not necessarily produce a code patch.
+> A bug produces a set of traceable corrective changes.
 
 ---
 
-# 5. Adicionar impacto em dados e recuperação de estado
+# 5. Add data impact and state recovery
 
-Corrigir a lógica futura não corrige automaticamente o estado histórico já afetado.
+Fixing future logic does not automatically fix the historical state already affected.
 
-Exemplo:
-
-```text
-bug corrigido:
-desconto duplicado
-
-estado histórico:
-38.421 pedidos armazenados com valor incorreto
-```
-
-O Reversa precisa perguntar:
+Example:
 
 ```text
-O sistema está corrigido daqui para frente?
-Os dados antigos continuam incorretos?
-Existe estado externo afetado?
-Caches precisam ser invalidados?
-Mensagens incorretas já foram publicadas?
+bug fixed:
+duplicate discount
+
+historical state:
+38,421 orders stored with incorrect value
 ```
 
-Adicionar:
+Reversa needs to ask:
+
+```text
+Is the system fixed going forward?
+Is the old data still incorrect?
+Is there affected external state?
+Do caches need to be invalidated?
+Have incorrect messages already been published?
+```
+
+Add:
 
 ```yaml
 data_impact:
@@ -301,7 +301,7 @@ data_impact:
   external_state_affected: false
 ```
 
-E, quando aplicável:
+And, when applicable:
 
 ```yaml
 data_repair:
@@ -314,7 +314,7 @@ data_repair:
   artifact: scripts/repair_duplicate_orders.py
 ```
 
-Adicionar também uma visão de recuperação sistêmica:
+Also add a systemic recovery view:
 
 ```yaml
 system_recovery:
@@ -324,7 +324,7 @@ system_recovery:
   external_state: verified
 ```
 
-Regra conceitual:
+Conceptual rule:
 
 ```text
 CODE HEALED
@@ -332,21 +332,21 @@ CODE HEALED
 SYSTEM HEALED
 ```
 
-Um bug não deve ser fechado apenas porque o teste passou se o sistema ainda contém estado corrompido causado pelo defeito.
+A bug should not be closed just because the test passed if the system still contains corrupted state caused by the defect.
 
 ---
 
-# 6. Adicionar uma Reproduction Capsule
+# 6. Add a Reproduction Capsule
 
-Este é um requisito estrutural importante.
+This is an important structural requirement.
 
-Hoje o bug aponta código, spec e testes, mas não descreve com precisão suficiente **em qual estado do mundo o defeito aconteceu**.
+Today the bug points to code, spec, and tests, but does not describe with sufficient precision **in what state of the world the defect occurred**.
 
-Criar uma entidade chamada:
+Create an entity called:
 
 # `Reproduction Capsule`
 
-Exemplo:
+Example:
 
 ```yaml
 reproduction:
@@ -387,58 +387,58 @@ reproduction:
     stdout: evidence/BUG-007/run-001.stdout.log
 ```
 
-A cápsula deve congelar o contexto mínimo necessário para reproduzir e interpretar o defeito.
+The capsule must freeze the minimum context necessary to reproduce and interpret the defect.
 
-Ela é especialmente importante para:
+It is especially important for:
 
 ```text
-bugs de ambiente
-bugs regressivos
-bugs intermitentes
-bugs de dependência
-bugs de concorrência
-bugs sensíveis a configuração
+environment bugs
+regressive bugs
+intermittent bugs
+dependency bugs
+concurrency bugs
+configuration-sensitive bugs
 ```
 
 ---
 
-# 7. Separar reproduction test de regression test
+# 7. Separate reproduction test from regression test
 
-O plano atual aproxima os dois conceitos em excesso.
+The current plan approximates the two concepts too closely.
 
-Eles podem coincidir, mas não são semanticamente equivalentes.
+They may coincide, but they are not semantically equivalent.
 
 ```text
 REPRODUCTION TEST
-"Consigo fazer o defeito relatado aparecer?"
+"Can I make the reported defect appear?"
 
 REGRESSION TEST
-"Consigo proteger o comportamento que não pode voltar a quebrar?"
+"Can I protect the behavior that must not break again?"
 ```
 
-Exemplo:
+Example:
 
 ```text
 Bug:
-pagamento duplicado após timeout
+duplicate payment after timeout
 ```
 
-Teste de reprodução:
+Reproduction test:
 
 ```text
-simular timeout HTTP
-executar retry
-observar duas cobranças
+simulate HTTP timeout
+execute retry
+observe two charges
 ```
 
-Teste de regressão:
+Regression test:
 
 ```text
-para qualquer retry com mesma idempotency_key
-número de cobranças efetivadas deve ser exatamente 1
+for any retry with the same idempotency_key
+number of effective charges must be exactly 1
 ```
 
-Schema recomendado:
+Recommended schema:
 
 ```yaml
 tests:
@@ -453,27 +453,27 @@ tests:
       protects: SPEC-PAYMENT-0042
 ```
 
-A correção pode exigir múltiplos regression tests para proteger propriedades distintas do comportamento.
+The correction may require multiple regression tests to protect distinct properties of the behavior.
 
 ---
 
-# 8. Causa raiz precisa de estado epistemológico
+# 8. Root cause needs epistemological status
 
-O campo atual `root_cause_code` responde principalmente:
-
-```text
-onde?
-```
-
-Ele não responde adequadamente:
+The current `root_cause_code` field primarily answers:
 
 ```text
-por que acreditamos que esta é a causa?
-quanto confiamos nisso?
-qual evidência sustenta a afirmação?
+where?
 ```
 
-Substituir ou complementar por:
+It does not adequately answer:
+
+```text
+why do we believe this is the cause?
+how confident are we in this?
+what evidence supports the claim?
+```
+
+Replace or complement with:
 
 ```yaml
 root_cause:
@@ -481,7 +481,7 @@ root_cause:
   confidence: 0.94
 
   hypothesis:
-    "O cupom é reaplicado durante a fase de fechamento."
+    "The coupon is reapplied during the closing phase."
 
   causal_path:
     - cart.apply_coupon
@@ -501,7 +501,7 @@ root_cause:
       file: src/checkout/fechamento.py
 ```
 
-Estados recomendados:
+Recommended states:
 
 ```text
 hypothesized
@@ -510,27 +510,27 @@ confirmed
 rejected
 ```
 
-Regra:
+Rule:
 
-> Uma memória causal precisa distinguir hipótese de fato confirmado.
+> A causal memory needs to distinguish hypothesis from confirmed fact.
 
-Sem isso, relações incorretas podem contaminar:
+Without this, incorrect relationships can contaminate:
 
 ```text
-grafo
+graph
 impact score
-priorização
-debates futuros
-diagnósticos posteriores
+prioritization
+future debates
+subsequent diagnoses
 ```
 
 ---
 
-# 9. Relações BUG ↔ BUG também precisam de evidência
+# 9. BUG ↔ BUG relationships also need evidence
 
-Hoje relações tipadas são uma boa ideia, mas não devem ser tratadas automaticamente como fatos.
+Today typed relationships are a good idea, but they should not be automatically treated as facts.
 
-Exemplo:
+Example:
 
 ```yaml
 relationships:
@@ -543,7 +543,7 @@ relationships:
     asserted_by: reversa-correlator
 ```
 
-Estados:
+States:
 
 ```text
 proposed
@@ -552,25 +552,25 @@ confirmed
 rejected
 ```
 
-Aplicar pesos diferentes nas views e no impact score.
+Apply different weights in views and impact score.
 
-Exemplo:
+Example:
 
 ```text
-confirmed caused-by: peso total
-supported caused-by: peso parcial
-proposed caused-by: não entra em priorização automática
+confirmed caused-by: full weight
+supported caused-by: partial weight
+proposed caused-by: does not enter automatic prioritization
 ```
 
-Uma relação proposta não pode alterar automaticamente a prioridade operacional de outros bugs.
+A proposed relationship cannot automatically alter the operational priority of other bugs.
 
 ---
 
-# 10. O debate deve ter três modos
+# 10. The debate should have three modes
 
-O debate não deve servir apenas para escolher estratégia de correção.
+The debate should not serve only to choose a correction strategy.
 
-Criar:
+Create:
 
 ```yaml
 debate_mode:
@@ -581,122 +581,122 @@ debate_mode:
 
 ## 10.1 `diagnosis`
 
-Usado quando há múltiplas hipóteses causais.
+Used when there are multiple causal hypotheses.
 
 ```text
-H1: cache inconsistente
-H2: retry não idempotente
-H3: mensagem duplicada na fila
+H1: inconsistent cache
+H2: non-idempotent retry
+H3: duplicate message in the queue
 ```
 
-Objetivo:
+Objective:
 
 ```text
-comparar hipóteses
-avaliar evidências
-propor probes discriminativos
-consolidar diagnóstico
+compare hypotheses
+evaluate evidence
+propose discriminative probes
+consolidate diagnosis
 ```
 
 ## 10.2 `repair`
 
-Usado quando a causa está suficientemente confirmada, mas existem estratégias concorrentes de correção.
+Used when the cause is sufficiently confirmed, but there are competing correction strategies.
 
-Objetivo:
+Objective:
 
 ```text
-menor mudança coerente
-menor risco de regressão
-melhor alinhamento com a spec
-melhor reversibilidade
-menor blast radius
+smallest coherent change
+lowest regression risk
+best alignment with the spec
+best reversibility
+smallest blast radius
 ```
 
 ## 10.3 `spec`
 
-Usado quando código, testes e spec divergem e não está claro qual representa o comportamento correto.
+Used when code, tests, and spec diverge and it is not clear which represents the correct behavior.
 
-Objetivo:
+Objective:
 
 ```text
-avaliar comportamento observado
-avaliar spec efetiva
-avaliar evidência histórica
-avaliar contratos e consumidores
-propor veredito de spec
+evaluate observed behavior
+evaluate effective spec
+evaluate historical evidence
+evaluate contracts and consumers
+propose spec verdict
 ```
 
-O debate de `spec` deve terminar em **recomendação**, nunca decisão automática.
+The `spec` debate should end in a **recommendation**, never an automatic decision.
 
-A decisão final continua humana.
+The final decision remains human.
 
 ---
 
-# 11. Referências de spec não podem depender apenas de path#anchor
+# 11. Spec references cannot depend only on path#anchor
 
-O formato:
+The format:
 
 ```yaml
 specs:
   - _reversa_sdd/domain.md#regras-de-desconto
 ```
 
-é um locator, não uma identidade estável.
+is a locator, not a stable identity.
 
-Após reextração:
+After re-extraction:
 
 ```text
 domain.md
 ```
 
-pode virar:
+can become:
 
 ```text
 business-rules.md
 ```
 
-O heading pode ser alterado.
+The heading can be changed.
 
-Criar IDs estáveis de spec:
+Create stable spec IDs:
 
 ```yaml
 spec_refs:
   - id: SPEC-DOMAIN-0042
 ```
 
-E um catálogo:
+And a catalog:
 
 ```yaml
 id: SPEC-DOMAIN-0042
 kind: business-rule
-title: Limite máximo de desconto
+title: Maximum discount limit
 
 current_location:
   file: _reversa_sdd/domain.md
   anchor: regras-de-desconto
 ```
 
-O bug aponta para:
+The bug points to:
 
 ```text
 SPEC ID
 ```
 
-As views resolvem:
+The views resolve:
 
 ```text
-SPEC ID → localização atual
+SPEC ID → current location
 ```
 
-A identidade não deve ser o caminho físico.
+The identity should not be the physical path.
 
 ---
 
-# 12. Referências de código também precisam ser mais fortes
+# 12. Code references also need to be stronger
 
-Um arquivo isolado é pouco para rastreabilidade temporal.
+An isolated file is too little for temporal traceability.
 
-Exemplo:
+Example:
 
 ```yaml
 code_refs:
@@ -706,70 +706,70 @@ code_refs:
     captured_at_commit: a1b2c3
 ```
 
-Quando possível, registrar:
+When possible, record:
 
 ```text
 file
 symbol
 commit
 blob sha
-line range apenas como locator auxiliar
+line range only as auxiliary locator
 ```
 
-Line number nunca deve ser identidade canônica.
+Line number should never be canonical identity.
 
-O objetivo é distinguir:
+The objective is to distinguish:
 
 ```text
-onde o código está hoje
+where the code is today
 ```
 
-de:
+from:
 
 ```text
-qual versão do código participou do defeito
+which version of the code participated in the defect
 ```
 
 ---
 
-# 13. O BUG ID precisa ser merge-safe
+# 13. The BUG ID needs to be merge-safe
 
-Um registrador central resolve colisões dentro de uma execução coordenada.
+A central registrar solves collisions within a coordinated execution.
 
-Não resolve necessariamente:
+It does not necessarily solve:
 
 ```text
 Codex worktree A
 Claude worktree B
 ```
 
-ambos lendo o mesmo último número e criando `BUG-042`.
+both reading the same last number and creating `BUG-042`.
 
-Não usar sequência global simples como identidade canônica.
+Do not use a simple global sequence as canonical identity.
 
-Sugestão:
+Suggestion:
 
 ```text
 BUG-20260715-A7K3
 BUG-20260715-P9M2
 ```
 
-ou ULID.
+or ULID.
 
-A interface pode manter um número humano opcional:
+The interface can maintain an optional human number:
 
 ```yaml
 id: BUG-20260715-A7K3
 display_number: 42
 ```
 
-A identidade precisa ser globalmente única e tolerante a branches e worktrees concorrentes.
+The identity needs to be globally unique and tolerant of concurrent branches and worktrees.
 
 ---
 
-# 14. Não mover arquivos de bug entre pastas de status
+# 14. Do not move bug files between status folders
 
-O desenho atual mantém:
+The current design maintains:
 
 ```text
 open/
@@ -777,24 +777,24 @@ active/
 resolved/
 ```
 
-e também:
+and also:
 
 ```yaml
 status: active
 ```
 
-Isso duplica o mesmo fato.
+This duplicates the same fact.
 
-A necessidade de detectar:
+The need to detect:
 
 ```text
-arquivo em active/
+file in active/
 status: open
 ```
 
-é evidência de redundância arquitetural.
+is evidence of architectural redundancy.
 
-Recomendação:
+Recommendation:
 
 ```text
 _reversa_bugs/
@@ -806,7 +806,7 @@ _reversa_bugs/
 └── generated/
 ```
 
-Todos os bugs ficam em:
+All bugs go in:
 
 ```text
 _reversa_bugs/bugs/
@@ -819,7 +819,7 @@ status: active
 phase: diagnosing
 ```
 
-Status recomendados:
+Recommended statuses:
 
 ```text
 open
@@ -827,7 +827,7 @@ active
 resolved
 ```
 
-Fases recomendadas:
+Recommended phases:
 
 ```text
 triaging
@@ -848,7 +848,7 @@ observing
 awaiting-human
 ```
 
-As views geradas podem materializar:
+The generated views can materialize:
 
 ```text
 generated/open.md
@@ -856,15 +856,15 @@ generated/active.md
 generated/resolved.md
 ```
 
-A pasta não deve ser fonte de estado.
+The folder should not be a source of state.
 
 ---
 
-# 15. Adicionar PR, review, CI e merge ao ciclo
+# 15. Add PR, review, CI, and merge to the cycle
 
-A correção local não é necessariamente a entrega da correção.
+A local correction is not necessarily the delivery of the correction.
 
-O lifecycle deve suportar:
+The lifecycle should support:
 
 ```text
 branch/worktree
@@ -875,7 +875,7 @@ CI
 merge
 ```
 
-Exemplo:
+Example:
 
 ```yaml
 delivery:
@@ -908,43 +908,43 @@ delivery:
     commit: null
 ```
 
-O Reversa não deve depender de GitHub.
+Reversa should not depend on GitHub.
 
-Detectar:
+Detect:
 
 ```text
 GitHub
 GitLab
-outro remote
-Git sem remote
-sem Git
+other remote
+Git without remote
+without Git
 ```
 
-E adaptar o workflow.
+And adapt the workflow.
 
-A integração deve ser opcional, mas o schema do lifecycle precisa comportá-la.
+The integration should be optional, but the lifecycle schema needs to accommodate it.
 
 ---
 
-# 16. `resolved` precisa depender de uma closure policy
+# 16. `resolved` needs to depend on a closure policy
 
-Hoje o plano tende a fechar o bug após correção, teste e veredito de spec.
+Today the plan tends to close the bug after correction, test, and spec verdict.
 
-Isso é cedo demais para vários tipos de sistema.
+This is too early for several types of systems.
 
-Exemplo:
+Example:
 
 ```text
-teste local passou
-CI passou
-merge foi feito
-deploy ocorreu
-produção voltou a apresentar o problema
+local test passed
+CI passed
+merge was done
+deploy occurred
+production exhibited the problem again
 ```
 
-O bug não estava resolvido.
+The bug was not resolved.
 
-Criar:
+Create:
 
 ```yaml
 closure_policy:
@@ -955,7 +955,7 @@ closure_policy:
     - observation-window-passed
 ```
 
-Outros exemplos:
+Other examples:
 
 ```yaml
 closure_policy:
@@ -972,28 +972,28 @@ closure_policy:
     - regression-tests-passed
 ```
 
-O bug permanece:
+The bug remains:
 
 ```yaml
 status: active
 phase: observing
 ```
 
-até a política de fechamento ser satisfeita.
+until the closure policy is satisfied.
 
-`resolved` deve significar:
+`resolved` should mean:
 
-> A condição de fechamento definida para este projeto foi comprovadamente satisfeita.
+> The closure condition defined for this project was provably satisfied.
 
 ---
 
-# 17. Adicionar observação pós-correção
+# 17. Add post-correction observation
 
-O Reversa registra evidências do defeito.
+Reversa records evidence of the defect.
 
-Também precisa registrar evidências de não recorrência.
+It also needs to record evidence of non-recurrence.
 
-Criar:
+Create:
 
 ```yaml
 post_fix_observation:
@@ -1017,21 +1017,21 @@ post_fix_observation:
   verdict: verified
 ```
 
-As evidências podem vir de:
+The evidence can come from:
 
 ```text
-testes
+tests
 logs
-métricas
+metrics
 traces
 queries
 health checks
 smoke tests
-telemetria externa
-procedimento manual
+external telemetry
+manual procedure
 ```
 
-A ideia é registrar:
+The idea is to record:
 
 ```text
 BEFORE FIX
@@ -1041,7 +1041,7 @@ CHANGE
 AFTER FIX
 ```
 
-e não apenas:
+and not just:
 
 ```text
 test failed
@@ -1051,15 +1051,15 @@ test passed
 
 ---
 
-# 18. Bugs intermitentes devem ser cidadãos de primeira classe
+# 18. Intermittent bugs should be first-class citizens
 
-Não limitar reprodução a:
+Do not limit reproduction to:
 
 ```yaml
 reproducible: always
 ```
 
-Modelar:
+Model:
 
 ```yaml
 reproduction:
@@ -1081,7 +1081,7 @@ reproduction:
     load: 200-rps
 ```
 
-Classificações iniciais:
+Initial classifications:
 
 ```text
 deterministic
@@ -1091,33 +1091,33 @@ not-reproduced
 unknown
 ```
 
-Quando não houver reprodução, o fluxo deve poder concluir:
+When there is no reproduction, the flow should be able to conclude:
 
 ```yaml
 resolution_kind: instrumentation-required
 ```
 
-Nesse caso, o resultado da investigação pode ser:
+In this case, the result of the investigation may be:
 
 ```text
-adicionar logs
-adicionar métricas
-adicionar trace
-adicionar correlation id
-adicionar probe temporário
+add logs
+add metrics
+add trace
+add correlation id
+add temporary probe
 ```
 
-O objetivo é capturar evidência na próxima ocorrência.
+The objective is to capture evidence on the next occurrence.
 
-Instrumentação pode ser uma ação corretiva válida mesmo sem causa raiz confirmada.
+Instrumentation can be a valid corrective action even without a confirmed root cause.
 
 ---
 
-# 19. Tornar git bisect um mecanismo formal
+# 19. Make git bisect a formal mechanism
 
-O documento atual trata histórico Git principalmente como fonte auxiliar.
+The current document treats Git history primarily as an auxiliary source.
 
-Para suspeita de regressão, formalizar:
+For suspected regression, formalize:
 
 ```yaml
 regression_analysis:
@@ -1137,17 +1137,17 @@ regression_analysis:
     pull_request: 118
 ```
 
-Quando houver:
+When there is:
 
 ```text
-um commit bom conhecido
-um commit ruim conhecido
-um comando reproduzível
+a known good commit
+a known bad commit
+a reproducible command
 ```
 
-o Reversa deve sugerir ou executar `git bisect` dentro das restrições de segurança definidas.
+Reversa should suggest or execute `git bisect` within the defined security constraints.
 
-Isso combina diretamente com a proposta de memória causal:
+This directly combines with the causal memory proposal:
 
 ```text
 BUG
@@ -1163,11 +1163,11 @@ SPEC IMPACT
 
 ---
 
-# 20. Adicionar versões afetadas, fixed versions e backports
+# 20. Add affected versions, fixed versions, and backports
 
-Projetos reais frequentemente mantêm múltiplas linhas de versão.
+Real projects frequently maintain multiple version lines.
 
-Adicionar:
+Add:
 
 ```yaml
 versions:
@@ -1183,7 +1183,7 @@ versions:
     - 2.3.17
 ```
 
-E:
+And:
 
 ```yaml
 backports:
@@ -1196,15 +1196,15 @@ backports:
     requires_manual_adaptation: true
 ```
 
-O bug pode estar corrigido em `main` e continuar ativo para uma release suportada.
+The bug can be fixed in `main` and remain active for a supported release.
 
-A closure policy precisa considerar isso quando o projeto possuir branches mantidas.
+The closure policy needs to consider this when the project has maintained branches.
 
 ---
 
-# 21. Adicionar ownership
+# 21. Add ownership
 
-Os campos:
+The fields:
 
 ```text
 area
@@ -1212,9 +1212,9 @@ module
 feature
 ```
 
-não dizem quem responde pela parte afetada.
+do not say who is responsible for the affected part.
 
-Adicionar:
+Add:
 
 ```yaml
 ownership:
@@ -1233,18 +1233,18 @@ ownership:
     - finance
 ```
 
-Quando possível, inferir ownership de:
+When possible, infer ownership from:
 
 ```text
 CODEOWNERS
-histórico Git
-estrutura do repositório
-configuração do projeto
+Git history
+repository structure
+project configuration
 ```
 
-Não inventar ownership.
+Do not invent ownership.
 
-Se não houver evidência:
+If there is no evidence:
 
 ```yaml
 owning_team: unclassified
@@ -1252,11 +1252,11 @@ owning_team: unclassified
 
 ---
 
-# 22. A origem do bug pode ser externa
+# 22. The bug origin can be external
 
-O `/reversa-bug` continua válido como intake conversacional.
+`/reversa-bug` remains valid as a conversational intake.
 
-Mas bugs também chegam por:
+But bugs also arrive via:
 
 ```text
 GitHub Issue
@@ -1266,12 +1266,12 @@ alert
 log
 trace
 Sentry
-suporte
-cliente
+support
+customer
 security advisory
 ```
 
-Adicionar:
+Add:
 
 ```yaml
 origin:
@@ -1282,7 +1282,7 @@ origin:
     id: "#317"
 ```
 
-Ou:
+Or:
 
 ```yaml
 origin:
@@ -1293,7 +1293,7 @@ origin:
     id: EVENT-82828
 ```
 
-Tipos iniciais:
+Initial types:
 
 ```text
 manual-report
@@ -1309,24 +1309,24 @@ inspection
 other
 ```
 
-O `BUG-XXX.md` continua sendo a source of truth do Reversa.
+The `BUG-XXX.md` remains the Reversa source of truth.
 
-A origem externa apenas registra de onde o defeito entrou no lifecycle.
+The external origin only records where the defect entered the lifecycle.
 
 ---
 
-# 23. Adicionar fluxo especial para bugs de segurança
+# 23. Add special flow for security bugs
 
-O Reversa não pode registrar vulnerabilidades exploráveis em artefatos públicos sem considerar confidencialidade.
+Reversa cannot record exploitable vulnerabilities in public artifacts without considering confidentiality.
 
-Adicionar:
+Add:
 
 ```yaml
 visibility:
   classification: restricted
 ```
 
-Classificações:
+Classifications:
 
 ```text
 normal
@@ -1335,7 +1335,7 @@ restricted
 embargoed
 ```
 
-Ao detectar indícios de segurança:
+Upon detecting security indicators:
 
 ```text
 authentication bypass
@@ -1348,49 +1348,49 @@ cryptographic failure
 sensitive data exposure
 ```
 
-o protocolo deve mudar.
+the protocol should change.
 
-Regras mínimas:
+Minimum rules:
 
 ```text
-não escrever detalhes exploráveis em artefatos públicos
-não enviar material a harness externo sem aprovação
-não incluir o bug em views públicas
-não publicar causa raiz detalhada automaticamente
-não expor evidência sensível em debates
+do not write exploitable details in public artifacts
+do not send material to external harness without approval
+do not include the bug in public views
+do not automatically publish detailed root cause
+do not expose sensitive evidence in debates
 ```
 
-A classificação de segurança não deve ser atribuída silenciosamente como fato definitivo.
+The security classification should not be silently assigned as a definitive fact.
 
-O agente pode marcar:
+The agent can mark:
 
 ```yaml
 security_suspected: true
 ```
 
-e solicitar confirmação quando necessário.
+and request confirmation when necessary.
 
 ---
 
-# 24. Separar impacto do bug de risco da correção
+# 24. Separate bug impact from correction risk
 
-O `impact score` responde:
-
-```text
-qual a importância ou propagação do defeito?
-```
-
-Ele não responde:
+The `impact score` answers:
 
 ```text
-qual o risco de mexer no sistema para corrigir?
+what is the importance or propagation of the defect?
 ```
 
-Criar:
+It does not answer:
+
+```text
+what is the risk of modifying the system to fix it?
+```
+
+Create:
 
 # `change_risk`
 
-Exemplo:
+Example:
 
 ```yaml
 change_risk:
@@ -1407,7 +1407,7 @@ change_risk:
   external_contract_change: false
 ```
 
-Dimensões possíveis:
+Possible dimensions:
 
 ```text
 blast radius
@@ -1423,7 +1423,7 @@ critical path
 test coverage
 ```
 
-A política de execução deve considerar:
+The execution policy should consider:
 
 ```text
 BUG IMPACT
@@ -1435,40 +1435,40 @@ CHANGE RISK
 EXECUTION POLICY
 ```
 
-Exemplo:
+Example:
 
 ```text
-baixo risco + causa confirmada
+low risk + confirmed cause
 → direct fix
 
-alta incerteza diagnóstica
+high diagnostic uncertainty
 → diagnosis debate
 
-alto change risk
-→ repair debate + review obrigatório
+high change risk
+→ repair debate + mandatory review
 
-mudança de spec
-→ aprovação humana obrigatória
+spec change
+→ mandatory human approval
 
-mudança crítica em produção
-→ rollout controlado + observation gate
+critical production change
+→ controlled rollout + observation gate
 ```
 
 ---
 
-# 25. Reduzir approval fatigue
+# 25. Reduce approval fatigue
 
-O princípio atual de handoff manual em toda etapa é seguro, mas pode tornar a aprovação mecânica e sem leitura.
+The current principle of manual handoff at every stage is safe, but can make approval mechanical and unread.
 
-Não exigir `CONTINUAR` após toda ação de leitura ou diagnóstico.
+Do not require `CONTINUE` after every reading or diagnosis action.
 
-Criar modos de controle:
+Create control modes:
 
 ```yaml
 control_mode: gated
 ```
 
-Valores:
+Values:
 
 ```text
 supervised
@@ -1476,68 +1476,68 @@ gated
 autonomous
 ```
 
-Sugestão de comportamento:
+Suggested behavior:
 
 ## `supervised`
 
-Aprovação frequente.
+Frequent approval.
 
-Adequado para:
+Suitable for:
 
 ```text
-ambientes sensíveis
+sensitive environments
 onboarding
-investigação exploratória
+exploratory investigation
 ```
 
 ## `gated`
 
-Padrão recomendado.
+Recommended default.
 
-Automático:
+Automatic:
 
 ```text
-leitura
-localização
-reprodução isolada
-diagnóstico
-coleta de evidências
-geração de views
+reading
+localization
+isolated reproduction
+diagnosis
+evidence collection
+view generation
 ```
 
-Gate obrigatório:
+Mandatory gate:
 
 ```text
-aplicar teste que altera o projeto
-aplicar correction change set
-alterar spec efetiva
-usar harness externo com acesso ao projeto
-executar operação destrutiva
+apply test that modifies the project
+apply correction change set
+alter effective spec
+use external harness with project access
+execute destructive operation
 deploy
 ```
 
 ## `autonomous`
 
-Somente quando explicitamente habilitado e limitado por políticas do projeto.
+Only when explicitly enabled and limited by project policies.
 
-Mesmo em modo autônomo, certas operações podem continuar obrigatoriamente gated.
+Even in autonomous mode, certain operations may remain mandatorily gated.
 
-Exemplo:
+Example:
 
 ```text
-mudança de spec
+spec change
 security
-produção
-dados irreversíveis
+production
+irreversible data
 ```
 
 ---
 
-# 26. Adicionar postmortem seletivo
+# 26. Add selective postmortem
 
-Não gerar postmortem para qualquer bug.
+Do not generate a postmortem for every bug.
 
-Criar política:
+Create policy:
 
 ```yaml
 postmortem_policy:
@@ -1548,7 +1548,7 @@ postmortem_policy:
     - recurrence_count: ">=2"
 ```
 
-Outros gatilhos possíveis:
+Other possible triggers:
 
 ```text
 customer outage
@@ -1558,7 +1558,7 @@ large financial impact
 SLA breach
 ```
 
-O Reversa já terá os dados necessários:
+Reversa will already have the necessary data:
 
 ```text
 BUG RECORD
@@ -1576,19 +1576,19 @@ OBSERVATION
 POSTMORTEM
 ```
 
-Salvar, quando exigido:
+Save, when required:
 
 ```text
 _reversa_bugs/postmortems/BUG-XXXX.md
 ```
 
-O postmortem deve ser derivado do registro existente e não uma segunda source of truth.
+The postmortem should be derived from the existing record and not a second source of truth.
 
 ---
 
-# 27. Revisão da arquitetura conceitual
+# 27. Conceptual architecture review
 
-A arquitetura não deve ser pensada como:
+The architecture should not be thought of as:
 
 ```text
 BUG FILE
@@ -1598,7 +1598,7 @@ AGENTS
 FIX
 ```
 
-Adotar o seguinte modelo mental:
+Adopt the following mental model:
 
 ```text
                  BUG RECORD
@@ -1632,18 +1632,18 @@ Adotar o seguinte modelo mental:
               CLOSURE POLICY
 ```
 
-Ponto central:
+Central point:
 
-> Os agentes não são a arquitetura.  
-> Os agentes são workers efêmeros de uma arquitetura governada por estado, evidência, políticas e rastreabilidade.
+> The agents are not the architecture.
+> The agents are ephemeral workers of an architecture governed by state, evidence, policies, and traceability.
 
 ---
 
-# 28. Os cinco comandos atuais podem continuar
+# 28. The five current commands can continue
 
-Não criar dez ou quinze novos comandos.
+Do not create ten or fifteen new commands.
 
-Manter:
+Keep:
 
 ```text
 /reversa-bug
@@ -1653,26 +1653,26 @@ Manter:
 /reversa-bug-graph
 ```
 
-O ganho deve entrar principalmente na máquina interna de estados e nos schemas.
+The gain should enter primarily in the internal state machine and in the schemas.
 
 ## `/reversa-bug`
 
-Responsável por:
+Responsible for:
 
 ```text
 intake
-triage inicial
-origem
-dedupe
-traceability inicial
-classificação
+initial triage
+origin
+dedup
+initial traceability
+classification
 security suspicion
-registro
+registration
 ```
 
 ## `/reversa-bug-fix`
 
-Deve se tornar o orquestrador principal do lifecycle:
+Should become the main lifecycle orchestrator:
 
 ```text
 mitigation
@@ -1687,13 +1687,13 @@ observation
 closure
 ```
 
-Não significa que execute todas as etapas em todos os projetos.
+Does not mean it executes all stages in all projects.
 
-A closure policy e o contexto definem o fluxo.
+The closure policy and context define the flow.
 
 ## `/reversa-bug-debate`
 
-Recebe:
+Receives:
 
 ```text
 mode: diagnosis | repair | spec
@@ -1701,11 +1701,11 @@ mode: diagnosis | repair | spec
 
 ## `/reversa-depth-inspection`
 
-Continua diagnóstico-only.
+Continues as diagnosis-only.
 
-Achados confirmados entram no registrador central.
+Confirmed findings enter the central registrar.
 
-Deve avaliar também sinais de:
+Should also evaluate signals of:
 
 ```text
 data corruption
@@ -1718,187 +1718,187 @@ version-specific behavior
 
 ## `/reversa-bug-graph`
 
-Gera views derivadas.
+Generates derived views.
 
-Não usar matriz NxN global como armazenamento.
+Do not use a global NxN matrix as storage.
 
-Preferir catálogo e arestas esparsas.
+Prefer catalog and sparse edges.
 
 ---
 
-# 29. Requisitos de implementação derivados deste parecer
+# 29. Implementation requirements derived from this opinion
 
-Antes de implementar, revisar `specs/reversa-bugs/` e incorporar, no mínimo:
+Before implementing, review `specs/reversa-bugs/` and incorporate, at minimum:
 
-- [ ] lifecycle completo de defeito;
-- [ ] `phase` separada de `status`;
-- [ ] bug path estável;
+- [ ] complete defect lifecycle;
+- [ ] `phase` separated from `status`;
+- [ ] stable bug path;
 - [ ] mitigation;
 - [ ] Reproduction Capsule;
-- [ ] reproduction tests separados de regression tests;
-- [ ] root cause com status epistemológico e evidências;
-- [ ] relationships com status, confiança e evidência;
+- [ ] reproduction tests separated from regression tests;
+- [ ] root cause with epistemological status and evidence;
+- [ ] relationships with status, confidence, and evidence;
 - [ ] `Correction Change Set`;
-- [ ] data impact e data repair;
-- [ ] IDs estáveis de spec;
-- [ ] code refs temporais e simbólicas;
-- [ ] IDs de bug merge-safe;
+- [ ] data impact and data repair;
+- [ ] stable spec IDs;
+- [ ] temporal and symbolic code refs;
+- [ ] merge-safe bug IDs;
 - [ ] debate `diagnosis | repair | spec`;
 - [ ] delivery lifecycle;
-- [ ] PR/review/CI/merge opcionais;
-- [ ] versions, fixed versions e backports;
+- [ ] optional PR/review/CI/merge;
+- [ ] versions, fixed versions, and backports;
 - [ ] closure policy;
 - [ ] post-fix observation;
-- [ ] tratamento explícito de intermittent bugs;
+- [ ] explicit handling of intermittent bugs;
 - [ ] `instrumentation-required`;
-- [ ] git bisect como mecanismo formal de regressão;
+- [ ] git bisect as a formal regression mechanism;
 - [ ] ownership;
 - [ ] external origins;
-- [ ] visibility e security flow;
+- [ ] visibility and security flow;
 - [ ] `change_risk`;
-- [ ] control modes e gates por risco;
+- [ ] control modes and risk-based gates;
 - [ ] postmortem policy.
 
 ---
 
-# 30. Critérios de aceitação da nova spec
+# 30. Acceptance criteria for the new spec
 
-A revisão estará pronta quando o desenho conseguir responder claramente aos cenários abaixo.
+The review will be ready when the design can clearly answer the scenarios below.
 
-## Cenário A: bug simples local
+## Scenario A: simple local bug
 
 ```text
-teste reproduz
-causa confirmada
-patch pequeno
-regression test passa
-sem CI
+test reproduces
+cause confirmed
+small patch
+regression test passes
+no CI
 ```
 
-O Reversa deve conseguir fechar o bug sem burocracia excessiva.
+Reversa should be able to close the bug without excessive bureaucracy.
 
-## Cenário B: incidente de produção
+## Scenario B: production incident
 
 ```text
-pagamento duplicado
-impacto financeiro
-mitigação imediata
+duplicate payment
+financial impact
+immediate mitigation
 rollback
-investigação posterior
-deploy controlado
-observação em produção
+subsequent investigation
+controlled deploy
+production observation
 ```
 
-O bug não pode ser marcado `resolved` após apenas um teste local.
+The bug cannot be marked `resolved` after just a local test.
 
-## Cenário C: corrupção de dados
+## Scenario C: data corruption
 
 ```text
-código corrigido
-dados históricos continuam errados
+code fixed
+historical data still wrong
 ```
 
-O sistema deve distinguir `code healed` de `system healed`.
+The system must distinguish `code healed` from `system healed`.
 
-## Cenário D: bug intermitente
+## Scenario D: intermittent bug
 
 ```text
-7 falhas em 100 execuções
-causa não confirmada
+7 failures in 100 executions
+cause not confirmed
 ```
 
-O fluxo deve permitir instrumentação adicional sem inventar causa raiz.
+The flow should allow additional instrumentation without inventing a root cause.
 
-## Cenário E: regressão
+## Scenario E: regression
 
 ```text
-há um commit bom
-há um commit ruim
-teste reproduzível
+there is a good commit
+there is a bad commit
+reproducible test
 ```
 
-O sistema deve comportar `git bisect` e ligar o bug ao culprit commit.
+The system should accommodate `git bisect` and link the bug to the culprit commit.
 
-## Cenário F: múltiplas versões
+## Scenario F: multiple versions
 
 ```text
-main corrigida
-release/2.4 ainda afetada
+main fixed
+release/2.4 still affected
 ```
 
-O bug deve permanecer operacionalmente aberto quando a closure policy exigir backport.
+The bug should remain operationally open when the closure policy requires backport.
 
-## Cenário G: divergência de spec
+## Scenario G: spec divergence
 
 ```text
-código, teste e spec discordam
-não está claro quem representa a regra correta
+code, test, and spec disagree
+it is not clear who represents the correct rule
 ```
 
-O Reversa deve poder abrir debate de `spec` e exigir decisão humana.
+Reversa should be able to open a `spec` debate and require human decision.
 
-## Cenário H: vulnerabilidade
+## Scenario H: vulnerability
 
 ```text
 authentication bypass
-repositório público
+public repository
 ```
 
-O Reversa não pode publicar detalhes exploráveis em views ou debates externos.
+Reversa cannot publish exploitable details in external views or debates.
 
-## Cenário I: dois harnesses em worktrees
+## Scenario I: two harnesses in worktrees
 
 ```text
-Claude registra um bug
-Codex registra outro ao mesmo tempo
+Claude registers a bug
+Codex registers another at the same time
 ```
 
-Os IDs não podem colidir.
+The IDs cannot collide.
 
-## Cenário J: fix de alto risco
+## Scenario J: high-risk fix
 
 ```text
-bug médio
-mudança em middleware usado por 147 callers
+medium bug
+change in middleware used by 147 callers
 ```
 
-A execução deve considerar `change_risk`, e não apenas impacto do bug.
+The execution should consider `change_risk`, not just bug impact.
 
 ---
 
-# 31. Diretriz final para a revisão
+# 31. Final directive for the review
 
-Não implementar ainda.
+Do not implement yet.
 
-Primeiro:
+First:
 
 ```text
-1. revisar requirements.md
-2. revisar design.md
-3. revisar tasks.md
-4. atualizar schemas e invariantes
-5. simular os 10 cenários de aceitação
-6. submeter novamente para revisão
+1. review requirements.md
+2. review design.md
+3. review tasks.md
+4. update schemas and invariants
+5. simulate the 10 acceptance scenarios
+6. submit again for review
 ```
 
-Não adicionar complexidade apenas por adicionar.
+Do not add complexity just for the sake of adding.
 
-O objetivo não é transformar o Reversa Bugs em Jira, Sentry, GitHub Actions ou uma plataforma de observabilidade.
+The objective is not to transform Reversa Bugs into Jira, Sentry, GitHub Actions, or an observability platform.
 
-O objetivo é:
+The objective is:
 
-> Criar uma memória causal, repository-native e orientada a agentes que acompanha o defeito desde sua descoberta até a comprovação de recuperação do sistema.
+> To create a causal, repository-native, agent-oriented memory that accompanies the defect from its discovery to the proven recovery of the system.
 
-A formulação arquitetural recomendada é:
+The recommended architectural formulation is:
 
 > **Reversa Bugs is a repository-native causal defect memory and orchestration layer that continuously reconciles specifications, implementation, tests, runtime evidence, delivery state, and defect history for agentic software maintenance.**
 
-A principal tese do projeto não deve ser:
+The main thesis of the project should not be:
 
-> "vários agentes corrigem bugs".
+> "multiple agents fix bugs".
 
-Deve ser:
+It should be:
 
-> **O sistema mantém uma memória causal verificável do defeito e usa agentes especializados como workers efêmeros para investigar, decidir, corrigir e comprovar a recuperação do software.**
+> **The system maintains a verifiable causal memory of the defect and uses specialized agents as ephemeral workers to investigate, decide, fix, and prove the recovery of the software.**
 
-Esse é o norte para redesenhar a spec.
+This is the north star for redesigning the spec.

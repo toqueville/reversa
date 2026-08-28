@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Verificador do eixo de invocação.
+Invocation axis verifier.
 
-Garante que cada skill declara sua invocação nas DUAS marcas, em lockstep:
-  - Claude Code : disable-model-invocation: true   no SKILL.md
-  - Codex       : policy.allow_implicit_invocation: false  em agents/openai.yaml
+Ensures each skill declares its invocation in BOTH marks, in lockstep:
+  - Claude Code : disable-model-invocation: true   in SKILL.md
+  - Codex       : policy.allow_implicit_invocation: false  in agents/openai.yaml
 
-Uso:  verify_invocation.py <dir-de-skills> [<dir-de-skills> ...]
-Sai com código 1 se houver qualquer violação.
+Usage:  verify_invocation.py <skills-dir> [<skills-dir> ...]
+Exits with code 1 if there is any violation.
 """
 import re, sys, pathlib
 
@@ -20,45 +20,45 @@ def check(raiz):
     raiz = pathlib.Path(raiz)
     erros, skills = [], sorted(raiz.glob("*/SKILL.md"))
     if not skills:
-        return [f"{raiz}: nenhuma SKILL.md encontrada"], 0, 0
+        return [f"{raiz}: no SKILL.md found"], 0, 0
     n_user = 0
     for sk in skills:
         nome = sk.parent.name
         fm = frontmatter(sk)
         if fm is None:
-            erros.append(f"{nome}: SKILL.md sem frontmatter"); continue
+            erros.append(f"{nome}: SKILL.md without frontmatter"); continue
 
         claude_user = bool(re.search(r"^disable-model-invocation:\s*true\s*$", fm, re.M))
 
         y = sk.parent / "agents" / "openai.yaml"
         if not y.exists():
-            erros.append(f"{nome}: falta agents/openai.yaml (marca do Codex ausente)")
+            erros.append(f"{nome}: missing agents/openai.yaml (Codex mark absent)")
             continue
         yt = y.read_text(encoding="utf-8", errors="replace").replace("\r\n", "\n")
         codex_user = bool(re.search(r"^\s*allow_implicit_invocation:\s*false\s*$", yt, re.M))
 
-        # metadados de UI do Codex
+        # Codex UI metadata
         if not re.search(r"^\s*display_name:", yt, re.M):
-            erros.append(f"{nome}: openai.yaml sem interface.display_name")
+            erros.append(f"{nome}: openai.yaml missing interface.display_name")
         if not re.search(r"^\s*short_description:", yt, re.M):
-            erros.append(f"{nome}: openai.yaml sem interface.short_description")
+            erros.append(f"{nome}: openai.yaml missing interface.short_description")
 
-        # LOCKSTEP: user-invoked nas duas marcas, ou em nenhuma
+        # LOCKSTEP: user-invoked in both marks, or in neither
         if claude_user != codex_user:
             erros.append(
-                f"{nome}: DESCASAMENTO — Claude={'user' if claude_user else 'model'}-invoked, "
+                f"{nome}: MISMATCH — Claude={'user' if claude_user else 'model'}-invoked, "
                 f"Codex={'user' if codex_user else 'model'}-invoked")
         if claude_user:
             n_user += 1
 
-            # description de user-invoked é humana: sem lista de gatilhos
+            # user-invoked description is human-facing: no trigger lists
             d = re.search(r"^description:\s*(.+?)(?=\n[a-zA-Z_-]+:|\Z)", fm, re.S | re.M)
             if d:
                 desc = " ".join(d.group(1).split())
                 if re.search(r"Use quando|Use when|digitar\s+[\"'`]?/", desc, re.I):
                     erros.append(
-                        f"{nome}: description de user-invoked ainda tem gatilho de modelo "
-                        f"({len(desc)} chars) — deve ser um resumo humano de uma linha")
+                        f"{nome}: user-invoked description still has model trigger "
+                        f"({len(desc)} chars) — should be a human one-line summary")
     return erros, len(skills), n_user
 
 
@@ -67,18 +67,18 @@ def main(dirs):
     for d in dirs:
         erros, n, n_user = check(d)
         print(f"\n=== {d}")
-        print(f"    {n} skills · {n_user} user-invoked · {n - n_user} model-invoked")
+        print(f"    {n} skills - {n_user} user-invoked - {n - n_user} model-invoked")
         if erros:
-            print(f"    {len(erros)} violação(ões):")
+            print(f"    {len(erros)} violation(s):")
             for e in erros[:40]:
                 print(f"      ✗ {e}")
             if len(erros) > 40:
-                print(f"      … e mais {len(erros) - 40}")
+                print(f"      ... and {len(erros) - 40} more")
         else:
-            print("    ✓ eixo de invocação íntegro, 0 descasamentos")
+            print("    ✓ invocation axis intact, 0 mismatches")
         total_erros += len(erros)
 
-    # as árvores precisam ser idênticas entre si
+    # the trees must be identical to each other
     if len(dirs) > 1:
         import filecmp
         base = dirs[0]
@@ -90,15 +90,15 @@ def main(dirs):
                     out += difs(cc, pref + sub + "/")
                 return out
             d = difs(cmp)
-            print(f"\n=== árvores {base} × {outra}")
+            print(f"\n=== trees {base} x {outra}")
             if d:
-                print(f"    ✗ {len(d)} divergência(s): {d[:5]}")
+                print(f"    ✗ {len(d)} divergence(s): {d[:5]}")
                 total_erros += len(d)
             else:
-                print("    ✓ idênticas")
+                print("    ✓ identical")
 
     print(f"\n{'='*60}")
-    print("RESULTADO:", "✓ APROVADO" if total_erros == 0 else f"✗ {total_erros} violação(ões)")
+    print("RESULT:", "✓ APPROVED" if total_erros == 0 else f"✗ {total_erros} violation(s)")
     return 1 if total_erros else 0
 
 

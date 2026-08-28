@@ -1,83 +1,83 @@
-# Reversa, Meta-Harness, Diff e Handoff
+# Reversa, Meta-Harness, Diff, and Handoff
 
-## Documento de evolução conceitual e arquitetural
+## Conceptual and architectural evolution document
 
-Este documento consolida a discussão sobre o uso de **diff** e **handoff** em desenvolvimento de software orientado por agentes de IA e propõe sua incorporação ao **Reversa** dentro de uma arquitetura de **meta-harness**.
+This document consolidates the discussion on the use of **diff** and **handoff** in AI agent-oriented software development and proposes its incorporation into **Reversa** within a **meta-harness** architecture.
 
-A ideia central é tratar a execução de agentes não como uma sequência informal de prompts, mas como um sistema de trabalho coordenado, verificável, rastreável e capaz de transferir estado entre diferentes harnesses, agentes e sessões.
+The central idea is to treat agent execution not as an informal sequence of prompts, but as a coordinated, verifiable, traceable work system capable of transferring state between different harnesses, agents, and sessions.
 
 ---
 
-# 1. O que é diff no desenvolvimento de software
+# 1. What is diff in software development
 
-Em desenvolvimento de software, **diff** é a representação das diferenças entre duas versões de um código ou conjunto de arquivos.
+In software development, **diff** is the representation of the differences between two versions of code or a set of files.
 
-Ele mostra, normalmente linha a linha:
+It shows, normally line by line:
 
-- o que foi adicionado;
-- o que foi removido;
-- o que foi alterado.
+- what was added;
+- what was removed;
+- what was changed.
 
-Exemplo:
+Example:
 
 ```diff
 - total = preco * quantidade
 + total = preco * quantidade * desconto
 ```
 
-Neste caso:
+In this case:
 
-- `-` representa uma linha removida;
-- `+` representa uma linha adicionada.
+- `-` represents a removed line;
+- `+` represents an added line.
 
-Na prática, a linha antiga foi substituída pela nova.
+In practice, the old line was replaced by the new one.
 
-## 1.1 Diff como representação da mudança
+## 1.1 Diff as a representation of change
 
-O diff não precisa reapresentar o sistema inteiro.
+The diff does not need to re-present the entire system.
 
-Seu objetivo é responder:
+Its objective is to answer:
 
-> O que mudou entre o estado anterior e o estado atual?
+> What changed between the previous state and the current state?
 
-Essa característica torna o diff especialmente importante em manutenção de software.
+This characteristic makes the diff especially important in software maintenance.
 
-Um sistema pode conter milhares ou milhões de linhas de código. Em uma atividade de manutenção, normalmente não é necessário revisar todo o sistema. O interesse está concentrado na mudança produzida.
+A system can contain thousands or millions of lines of code. In a maintenance activity, it is normally not necessary to review the entire system. The interest is concentrated on the change produced.
 
-Por isso, o diff pode ser entendido como:
+Therefore, the diff can be understood as:
 
-> A unidade visual e estrutural da mudança no código.
+> The visual and structural unit of change in code.
 
 ---
 
-# 2. Onde o diff é utilizado
+# 2. Where diff is used
 
-| Contexto | Uso do diff |
+| Context | Use of diff |
 |---|---|
-| Manutenção de software | Identificar o código alterado durante uma correção |
-| Git e versionamento | Comparar versões, commits e branches |
-| Code review | Revisar apenas as mudanças feitas |
-| Correção de bugs | Identificar quais linhas foram modificadas |
-| Pull Request | Mostrar alterações propostas antes da integração |
-| Auditoria | Rastrear mudanças no sistema |
-| Refatoração | Avaliar a extensão das alterações estruturais |
-| Desenvolvimento com IA | Verificar exatamente o que um agente modificou |
+| Software maintenance | Identify the code changed during a fix |
+| Git and versioning | Compare versions, commits, and branches |
+| Code review | Review only the changes made |
+| Bug fixing | Identify which lines were modified |
+| Pull Request | Show proposed changes before integration |
+| Audit | Track changes in the system |
+| Refactoring | Evaluate the extent of structural changes |
+| AI-driven development | Verify exactly what an agent modified |
 
-No Git, por exemplo:
+In Git, for example:
 
 ```bash
 git diff
 ```
 
-Esse comando mostra alterações locais ainda não commitadas.
+This command shows local changes not yet committed.
 
-Também é possível comparar dois commits:
+It is also possible to compare two commits:
 
 ```bash
 git diff commitA commitB
 ```
 
-Ou comparar duas branches:
+Or compare two branches:
 
 ```bash
 git diff main feature-login
@@ -85,26 +85,26 @@ git diff main feature-login
 
 ---
 
-# 3. Diff no desenvolvimento com agentes de IA
+# 3. Diff in development with AI agents
 
-Com agentes como Claude Code, Codex e outros harnesses de programação, o diff ganha uma importância ainda maior.
+With agents like Claude Code, Codex, and other programming harnesses, the diff gains even greater importance.
 
-Um agente pode:
+An agent can:
 
-- criar arquivos;
-- remover código;
-- alterar APIs;
-- modificar testes;
-- alterar configurações;
-- introduzir mudanças fora do escopo solicitado.
+- create files;
+- remove code;
+- change APIs;
+- modify tests;
+- alter configurations;
+- introduce changes outside the requested scope.
 
-A resposta textual do agente não é suficiente para determinar com precisão o que aconteceu.
+The agent's textual response is not sufficient to precisely determine what happened.
 
-O agente pode afirmar:
+The agent can state:
 
-> Corrigi o login.
+> I fixed the login.
 
-Mas o repositório pode mostrar:
+But the repository can show:
 
 ```text
 18 files changed
@@ -112,217 +112,217 @@ Mas o repositório pode mostrar:
 763 deletions
 ```
 
-Neste cenário, existe uma diferença entre:
+In this scenario, there is a difference between:
 
-- a **declaração do agente**;
-- a **mudança material observável no código**.
+- the **agent's declaration**;
+- the **observable material change in the code**.
 
-O diff funciona como evidência objetiva da execução.
+The diff functions as objective evidence of the execution.
 
-Podemos resumir:
+We can summarize:
 
-> O agente descreve o que acredita ter feito.
+> The agent describes what it believes it did.
 
-> O diff mostra o que efetivamente mudou.
+> The diff shows what effectively changed.
 
 ---
 
-# 4. O que é handoff
+# 4. What is handoff
 
-**Handoff** significa passagem de responsabilidade, contexto e trabalho de uma pessoa, equipe, processo ou agente para outro.
+**Handoff** means the transfer of responsibility, context, and work from one person, team, process, or agent to another.
 
-No desenvolvimento de software, o conceito pode ser resumido como:
+In software development, the concept can be summarized as:
 
-> Eu executei minha parte. Este é o estado atual. A continuidade começa daqui.
+> I executed my part. This is the current state. Continuation starts from here.
 
-Handoffs aparecem em vários contextos tradicionais da engenharia de software.
+Handoffs appear in various traditional software engineering contexts.
 
-| Artefato ou processo | Tipo de handoff |
+| Artifact or process | Type of handoff |
 |---|---|
-| Pull Request | Desenvolvedor para revisor |
-| Issue | Produto ou suporte para desenvolvimento |
-| ADR | Arquiteto para desenvolvedores atuais e futuros |
-| Runbook | Engenharia para operações |
-| Incident report | Um turno de plantão para outro |
-| README | Autor para usuários e mantenedores |
-| Ticket | Uma equipe para outra |
-| Change Request | Solicitante para equipe responsável |
+| Pull Request | Developer to reviewer |
+| Issue | Product or support to development |
+| ADR | Architect to current and future developers |
+| Runbook | Engineering to operations |
+| Incident report | One on-call shift to another |
+| README | Author to users and maintainers |
+| Ticket | One team to another |
+| Change Request | Requester to responsible team |
 
-Portanto, **handoff não é apenas uma gíria de desenvolvedor**.
+Therefore, **handoff is not just a developer slang term**.
 
-É um conceito profissional consolidado em engenharia, operações, SRE, incident response, suporte e gestão de projetos.
+It is a consolidated professional concept in engineering, operations, SRE, incident response, support, and project management.
 
-Entretanto, existe uma distinção importante:
+However, there is an important distinction:
 
-> Existe um conceito consolidado de handoff, mas não existe um formato universal obrigatório de arquivo de handoff.
+> There is a consolidated concept of handoff, but there is no mandatory universal file format for handoff.
 
 ---
 
-# 5. Handoff em Claude Code, Codex e agentes
+# 5. Handoff in Claude Code, Codex, and agents
 
-Quando Claude Code ou Codex fala em salvar um handoff para outra sessão, o termo está sendo utilizado como uma forma de **persistência operacional de contexto**.
+When Claude Code or Codex talks about saving a handoff for another session, the term is being used as a form of **operational context persistence**.
 
-Uma sessão pode terminar.
+A session can end.
 
-Outro agente pode assumir o trabalho.
+Another agent can take over the work.
 
-Outro modelo pode ser utilizado.
+Another model can be used.
 
-O contexto original da LLM pode não existir mais.
+The original LLM context may no longer exist.
 
-O handoff registra informações suficientes para permitir continuidade.
+The handoff records sufficient information to allow continuity.
 
-Exemplo:
+Example:
 
 ```text
 HANDOFF.md
 
-Objetivo:
-Implementar autenticação OAuth.
+Objective:
+Implement OAuth authentication.
 
-Estado atual:
-Backend concluído.
+Current state:
+Backend completed.
 
-Arquivos alterados:
+Changed files:
 - src/auth/oauth.py
 - src/routes/login.py
 
-Decisões:
-Usamos OAuth 2.0 com PKCE.
+Decisions:
+We used OAuth 2.0 with PKCE.
 
-Problemas conhecidos:
-Callback falha no ambiente Windows.
+Known issues:
+Callback fails on Windows environment.
 
-Próximo passo:
-Corrigir callback e executar os testes de integração.
+Next step:
+Fix callback and run integration tests.
 ```
 
-O objetivo não é simplesmente documentar o trabalho.
+The objective is not simply to document the work.
 
-O objetivo é permitir que outro executor continue sem precisar reconstruir todo o raciocínio anterior.
+The objective is to allow another executor to continue without needing to reconstruct all the previous reasoning.
 
-Podemos definir o handoff para agentes como:
+We can define handoff for agents as:
 
-> Um checkpoint estruturado do estado operacional do trabalho.
+> A structured checkpoint of the operational state of the work.
 
 ---
 
-# 6. O handoff como memória operacional
+# 6. Handoff as operational memory
 
-Existe uma diferença entre documentação tradicional e handoff.
+There is a difference between traditional documentation and handoff.
 
-Uma documentação pode explicar:
+Documentation can explain:
 
-- como o sistema funciona;
-- por que uma arquitetura foi escolhida;
-- quais APIs existem;
-- como instalar o projeto.
+- how the system works;
+- why an architecture was chosen;
+- which APIs exist;
+- how to install the project.
 
-O handoff responde a perguntas diferentes:
+The handoff answers different questions:
 
-- qual era o objetivo atual?
-- o que já foi executado?
-- qual é o estado neste momento?
-- quais decisões foram tomadas?
-- quais arquivos foram afetados?
-- o que foi comprovado?
-- quais riscos permanecem?
-- o que ainda falta?
-- quem ou qual harness deveria continuar?
+- what was the current objective?
+- what has already been executed?
+- what is the state at this moment?
+- what decisions were made?
+- which files were affected?
+- what was proven?
+- which risks remain?
+- what is still missing?
+- who or which harness should continue?
 
-Por isso, o handoff pode ser visto como **memória operacional de curto e médio prazo do processo de desenvolvimento**.
+Therefore, the handoff can be seen as **short and medium-term operational memory of the development process**.
 
-Em sistemas multiagente, ele funciona como uma forma de persistência de estado entre execuções.
+In multi-agent systems, it functions as a form of state persistence between executions.
 
 ---
 
 # 7. Meta-harness
 
-Um **meta-harness** é um harness responsável por coordenar outros harnesses.
+A **meta-harness** is a harness responsible for coordinating other harnesses.
 
-Em vez de executar diretamente todas as atividades de desenvolvimento, o meta-harness atua como controlador.
+Instead of directly executing all development activities, the meta-harness acts as a controller.
 
-Ele pode:
+It can:
 
-- interpretar objetivos;
-- selecionar harnesses especializados;
-- delegar tarefas;
-- acompanhar resultados;
-- verificar evidências;
-- avaliar inconsistências;
-- decidir o próximo passo;
-- interromper loops;
-- solicitar correções;
-- transferir trabalho entre agentes.
+- interpret objectives;
+- select specialized harnesses;
+- delegate tasks;
+- track results;
+- verify evidence;
+- evaluate inconsistencies;
+- decide the next step;
+- interrupt loops;
+- request corrections;
+- transfer work between agents.
 
-Exemplo conceitual:
+Conceptual example:
 
 ```text
                     META-HARNESS
                          │
                          ▼
-               HARNESS IMPLEMENTADOR
+               IMPLEMENTATION HARNESS
                          │
                          ▼
-                 HARNESS DE TESTES
+                 TESTING HARNESS
                          │
                          ▼
-                HARNESS DE AUDITORIA
+                AUDIT HARNESS
                          │
                          ▼
-                HARNESS DE CORREÇÃO
+                CORRECTION HARNESS
 ```
 
-O problema fundamental dessa arquitetura é:
+The fundamental problem of this architecture is:
 
-> Como transferir o estado do trabalho de um harness para outro?
+> How to transfer the work state from one harness to another?
 
-A resposta proposta é:
+The proposed answer is:
 
 > Handoff.
 
 ---
 
-# 8. Handoff como contrato entre harnesses
+# 8. Handoff as a contract between harnesses
 
-O handoff pode ser transformado em um **contrato de comunicação entre harnesses**.
+The handoff can be transformed into a **communication contract between harnesses**.
 
-Um harness não deveria simplesmente retornar:
+A harness should not simply return:
 
 ```text
 done
 ```
 
-Ou:
+Or:
 
 ```text
 finished
 ```
 
-Ou:
+Or:
 
 ```text
 task completed
 ```
 
-Essas respostas são insuficientes para um meta-harness.
+These responses are insufficient for a meta-harness.
 
-O harness deveria produzir um pacote estruturado contendo o estado da execução.
+The harness should produce a structured package containing the execution state.
 
-Exemplo:
+Example:
 
 ```yaml
-objective: Corrigir BUG-042
+objective: Fix BUG-042
 
 status: implemented
 
 summary:
-  O login comparava a senha diretamente.
-  A validação foi alterada para usar o hash armazenado.
+  The login was comparing the password directly.
+  The validation was changed to use the stored hash.
 
 reason:
-  A implementação anterior era incompatível com
-  o fluxo definido na SPEC-AUTH-003.
+  The previous implementation was incompatible with
+  the flow defined in SPEC-AUTH-003.
 
 files_touched:
   - src/auth/login.py
@@ -337,120 +337,120 @@ verification:
   evidence: 12 tests passed
 
 remaining_risks:
-  - OAuth ainda não foi validado
+  - OAuth has not yet been validated
 
 unresolved_items:
-  - executar regressão completa da autenticação
+  - run complete authentication regression
 
 recommended_next_step:
-  Executar regressão completa de autenticação
+  Run complete authentication regression
 
 recommended_harness:
   regression-testing
 ```
 
-O handoff deixa de ser uma anotação informal.
+The handoff ceases to be an informal annotation.
 
-Ele passa a ser um artefato processável por máquina.
+It becomes a machine-processable artifact.
 
 ---
 
-# 9. Handoff e diff possuem funções diferentes
+# 9. Handoff and diff have different functions
 
-O handoff e o diff não são concorrentes.
+The handoff and the diff are not competitors.
 
-Eles representam dimensões diferentes da execução.
+They represent different dimensions of the execution.
 
 ## Diff
 
-O diff é:
+The diff is:
 
-- mecânico;
-- objetivo;
-- observável;
-- reproduzível;
-- verificável.
+- mechanical;
+- objective;
+- observable;
+- reproducible;
+- verifiable.
 
-Ele responde:
+It answers:
 
-> O que mudou?
+> What changed?
 
 ## Handoff
 
-O handoff é:
+The handoff is:
 
-- semântico;
+- semantic;
 - contextual;
-- operacional;
-- interpretativo;
-- orientado à continuidade.
+- operational;
+- interpretive;
+- continuity-oriented.
 
-Ele responde:
+It answers:
 
-> O que aconteceu e como continuar?
+> What happened and how to continue?
 
-A relação pode ser sintetizada assim:
+The relationship can be synthesized as:
 
-> Diff mostra o que mudou.
+> Diff shows what changed.
 
-> Handoff explica o que aconteceu e como continuar.
+> Handoff explains what happened and how to continue.
 
 ---
 
-# 10. A combinação central: handoff + diff
+# 10. The central combination: handoff + diff
 
-A combinação dos dois conceitos é especialmente poderosa em um meta-harness.
+The combination of the two concepts is especially powerful in a meta-harness.
 
-O harness executa uma atividade.
+The harness executes an activity.
 
-Após a execução:
+After execution:
 
-1. o sistema captura o diff;
-2. o harness gera o handoff;
-3. o meta-harness recebe os dois;
-4. o meta-harness compara declaração e evidência;
-5. o meta-harness decide a continuidade.
+1. the system captures the diff;
+2. the harness generates the handoff;
+3. the meta-harness receives both;
+4. the meta-harness compares declaration and evidence;
+5. the meta-harness decides the continuation.
 
-Arquitetura:
+Architecture:
 
 ```text
-                    META-HARNESS CHEFE
+                    BOSS META-HARNESS
                            │
-                    delega objetivo
+                    delegates objective
                            │
                            ▼
-                 HARNESS IMPLEMENTADOR
+                 IMPLEMENTATION HARNESS
                            │
-                    executa trabalho
+                    executes work
                            │
                     ┌──────┴──────┐
                     ▼             ▼
                   DIFF         HANDOFF
-             "o que mudou"   "o que aconteceu"
+             "what changed"   "what happened"
                     │             │
                     └──────┬──────┘
                            ▼
                     META-HARNESS
                            │
-                    toma decisão
+                    makes decision
                            ▼
-              próximo harness especializado
+              next specialized harness
 ```
 
 ---
 
-# 11. O diff audita o handoff
+# 11. The diff audits the handoff
 
-Esta é uma das ideias mais importantes da discussão.
+This is one of the most important ideas of the discussion.
 
-Um agente pode produzir o seguinte handoff:
+An agent can produce the following handoff:
 
 ```yaml
 status: completed
-summary: Corrigido o problema de login
+summary: Fixed the login problem
 ```
 
-Entretanto, o diff pode mostrar:
+However, the diff can show:
 
 ```text
 src/auth/login.py
@@ -461,120 +461,120 @@ src/payment/stripe.py
 README.md
 ```
 
-Existe uma inconsistência.
+There is an inconsistency.
 
-O escopo descrito pelo agente não explica as alterações observadas.
+The scope described by the agent does not explain the observed changes.
 
-O meta-harness pode identificar:
+The meta-harness can identify:
 
 ```yaml
 decision: REJECT_HANDOFF
 
 reason:
-  O escopo declarado no handoff não explica
-  as alterações observadas no diff.
+  The scope declared in the handoff does not explain
+  the changes observed in the diff.
 
 next_harness: diff-auditor
 ```
 
-Assim:
+Thus:
 
-> O diff audita o handoff.
+> The diff audits the handoff.
 
-O handoff é uma declaração produzida pelo agente.
+The handoff is a declaration produced by the agent.
 
-O diff é evidência material coletada diretamente do repositório.
+The diff is material evidence collected directly from the repository.
 
 ---
 
-# 12. O handoff explica o diff
+# 12. The handoff explains the diff
 
-A relação também funciona no sentido contrário.
+The relationship also works in the opposite direction.
 
-Considere o diff:
+Consider the diff:
 
 ```diff
 - if user.password == password:
 + if verify_password(password, user.password_hash):
 ```
 
-O diff mostra uma mudança.
+The diff shows a change.
 
-Mas não explica necessariamente:
+But it does not necessarily explain:
 
-- por que ela foi necessária;
-- qual bug estava relacionado;
-- qual especificação exigia a mudança;
-- quais riscos foram considerados;
-- o que ainda precisa ser testado.
+- why it was necessary;
+- which bug was related;
+- which specification required the change;
+- which risks were considered;
+- what still needs to be tested.
 
-O handoff pode registrar:
+The handoff can record:
 
 ```yaml
-objective: Corrigir BUG-042
+objective: Fix BUG-042
 
 summary:
-  A autenticação comparava a senha em texto direto.
-  A implementação foi ajustada para validar o hash armazenado.
+  Authentication was comparing the password in plain text.
+  The implementation was adjusted to validate the stored hash.
 
 reason:
-  O comportamento anterior violava a SPEC-AUTH-003.
+  The previous behavior violated SPEC-AUTH-003.
 
 verification:
   - pytest tests/auth/test_login.py
   - 12 tests passed
 
 remaining_risks:
-  - OAuth não foi validado
+  - OAuth was not validated
 ```
 
-Assim:
+Thus:
 
-> O handoff explica o diff.
+> The handoff explains the diff.
 
 ---
 
-# 13. Declaração versus evidência
+# 13. Declaration versus evidence
 
-A combinação handoff + diff cria uma distinção conceitual importante.
+The handoff + diff combination creates an important conceptual distinction.
 
 ## Handoff
 
-Representa a declaração do executor.
+Represents the executor's declaration.
 
 ```text
-O agente afirma que fez X.
+The agent claims it did X.
 ```
 
 ## Diff
 
-Representa a evidência material de alteração.
+Represents the material evidence of change.
 
 ```text
-O repositório mostra que Y mudou.
+The repository shows that Y changed.
 ```
 
 ## Meta-harness
 
-Atua como juiz.
+Acts as judge.
 
 ```text
-X é consistente com Y?
+Is X consistent with Y?
 ```
 
-A ideia pode ser sintetizada como:
+The idea can be synthesized as:
 
-> O handoff é a declaração do agente.
+> The handoff is the agent's declaration.
 
-> O diff é a evidência material.
+> The diff is the material evidence.
 
-> O meta-harness verifica se declaração e evidência são consistentes.
+> The meta-harness verifies whether declaration and evidence are consistent.
 
 ---
 
-# 14. Fluxo sugerido para o meta-harness
+# 14. Suggested flow for the meta-harness
 
-Um fluxo inicial pode ser estruturado da seguinte maneira:
+An initial flow can be structured as follows:
 
 ```text
 1. DELEGATE
@@ -591,24 +591,24 @@ Um fluxo inicial pode ser estruturado da seguinte maneira:
    ▼
 5. CROSS-VALIDATE
    │
-   ├── handoff condiz com diff?
-   ├── diff condiz com objetivo?
-   ├── arquivos alterados fazem sentido?
-   ├── specs relacionadas foram respeitadas?
-   ├── verificações realmente passaram?
-   └── riscos foram identificados?
+   ├── does handoff match diff?
+   ├── does diff match objective?
+   ├── do changed files make sense?
+   ├── were related specs respected?
+   ├── did verifications actually pass?
+   └── were risks identified?
    │
    ▼
 6. DECIDE NEXT HARNESS
 ```
 
-O passo 5 pode ser denominado:
+Step 5 can be called:
 
 ```text
 Handoff-Diff Consistency Check
 ```
 
-Ou:
+Or:
 
 ```text
 Cross-Evidence Validation
@@ -616,68 +616,68 @@ Cross-Evidence Validation
 
 ---
 
-# 15. As quatro camadas de evidência
+# 15. The four layers of evidence
 
-A arquitetura pode evoluir para uma comparação entre quatro componentes:
+The architecture can evolve to a comparison between four components:
 
 ```text
-INTENÇÃO
+INTENT
    ↕
 HANDOFF
    ↕
 DIFF
    ↕
-VERIFICAÇÃO
+VERIFICATION
 ```
 
-## 15.1 Intenção
+## 15.1 Intent
 
-Representa o objetivo original.
+Represents the original objective.
 
-Exemplo:
+Example:
 
 ```yaml
 objective:
-  Corrigir BUG-042
+  Fix BUG-042
 ```
 
 ## 15.2 Handoff
 
-Representa a interpretação e declaração do agente.
+Represents the agent's interpretation and declaration.
 
 ```yaml
 status: completed
-summary: Login corrigido
+summary: Login fixed
 ```
 
 ## 15.3 Diff
 
-Representa as mudanças materiais no repositório.
+Represents the material changes in the repository.
 
 ```text
 src/auth/login.py
 tests/auth/test_login.py
 ```
 
-## 15.4 Verificação
+## 15.4 Verification
 
-Representa evidências de funcionamento.
+Represents evidence of functionality.
 
 ```text
 12 tests passed
 ```
 
-O meta-harness deve verificar a consistência entre essas quatro dimensões.
+The meta-harness must verify the consistency between these four dimensions.
 
 ---
 
-# 16. Exemplo de aceitação
+# 16. Acceptance example
 
-Objetivo:
+Objective:
 
 ```yaml
 objective:
-  Corrigir BUG-042
+  Fix BUG-042
 ```
 
 Handoff:
@@ -686,9 +686,8 @@ Handoff:
 status: completed
 
 summary:
-  Login corrigido por meio da substituição
-  da comparação direta de senha pela validação
-  do hash armazenado.
+  Login fixed by replacing the direct password
+  comparison with stored hash validation.
 ```
 
 Diff:
@@ -698,13 +697,13 @@ src/auth/login.py
 tests/auth/test_login.py
 ```
 
-Verificação:
+Verification:
 
 ```text
 12 passed
 ```
 
-Decisão:
+Decision:
 
 ```yaml
 decision: ACCEPT
@@ -712,28 +711,28 @@ decision: ACCEPT
 next_harness: regression-auditor
 
 reason:
-  Diff consistente com o objetivo.
-  Handoff consistente com as alterações.
-  Verificação local passou.
-  Regressão global ainda não executada.
+  Diff consistent with the objective.
+  Handoff consistent with the changes.
+  Local verification passed.
+  Global regression not yet executed.
 ```
 
 ---
 
-# 17. Exemplo de rejeição
+# 17. Rejection example
 
-Objetivo:
+Objective:
 
 ```yaml
 objective:
-  Corrigir BUG-042 relacionado ao login
+  Fix BUG-042 related to login
 ```
 
 Handoff:
 
 ```yaml
 status: completed
-summary: Corrigido login
+summary: Fixed login
 ```
 
 Diff:
@@ -747,27 +746,27 @@ src/payment/stripe.py
 README.md
 ```
 
-Decisão:
+Decision:
 
 ```yaml
 decision: REJECT_HANDOFF
 
 reason:
-  O escopo declarado no handoff não explica
-  as alterações observadas no diff.
+  The scope declared in the handoff does not explain
+  the changes observed in the diff.
 
 next_harness: diff-auditor
 ```
 
-O meta-harness pode encaminhar o trabalho para um harness especializado em auditoria de mudanças.
+The meta-harness can forward the work to a harness specialized in change auditing.
 
 ---
 
 # 18. Handoff Package
 
-Todo harness filho pode ser obrigado a devolver um **Handoff Package**.
+Every child harness can be required to return a **Handoff Package**.
 
-Estrutura conceitual:
+Conceptual structure:
 
 ```text
 HANDOFF PACKAGE
@@ -788,7 +787,7 @@ HANDOFF PACKAGE
 └── recommended_next_harness
 ```
 
-Uma possível representação YAML:
+A possible YAML representation:
 
 ```yaml
 handoff:
@@ -797,22 +796,22 @@ handoff:
   task_id: BUG-042
 
   objective:
-    Corrigir falha de autenticação no login local.
+    Fix authentication failure in local login.
 
   status:
     implemented
 
   summary:
-    A comparação direta de senha foi removida.
-    A autenticação agora utiliza o hash armazenado.
+    The direct password comparison was removed.
+    Authentication now uses the stored hash.
 
   decisions:
     - id: DEC-001
-      description: Utilizar verify_password existente.
-      reason: Evitar duplicação de lógica criptográfica.
+      description: Use existing verify_password.
+      reason: Avoid duplication of cryptographic logic.
 
   assumptions:
-    - O formato atual do password_hash é válido.
+    - The current password_hash format is valid.
 
   diff_reference:
     base: abc123
@@ -835,13 +834,13 @@ handoff:
       - 12 passed
 
   risks:
-    - Fluxo OAuth não foi validado.
+    - OAuth flow was not validated.
 
   unresolved_items:
-    - Executar regressão completa de autenticação.
+    - Run complete authentication regression.
 
   recommended_next_step:
-    Executar testes de regressão.
+    Run regression tests.
 
   recommended_next_harness:
     regression-testing
@@ -849,24 +848,24 @@ handoff:
 
 ---
 
-# 19. Handoff como artefato de primeira classe
+# 19. Handoff as a first-class artifact
 
-No Reversa, o handoff deveria ser tratado como um **artefato de primeira classe**.
+In Reversa, the handoff should be treated as a **first-class artifact**.
 
-Isso significa que ele não deve ser apenas texto gerado livremente pela LLM.
+This means it should not be just text freely generated by the LLM.
 
-Ele deve possuir:
+It should have:
 
 - schema;
-- identificador;
-- versão;
-- validação;
-- persistência;
-- rastreabilidade;
-- referências;
-- histórico.
+- identifier;
+- version;
+- validation;
+- persistence;
+- traceability;
+- references;
+- history.
 
-Exemplo:
+Example:
 
 ```text
 .reversa/
@@ -883,9 +882,9 @@ Exemplo:
 └── meta-harness/
 ```
 
-Entretanto, deve-se tomar cuidado para não criar uma árvore excessivamente profunda.
+However, care should be taken not to create an excessively deep tree.
 
-Uma alternativa mais simples:
+A simpler alternative:
 
 ```text
 .reversa/
@@ -896,7 +895,7 @@ Uma alternativa mais simples:
 └── state/
 ```
 
-Arquivos:
+Files:
 
 ```text
 handoffs/
@@ -906,40 +905,40 @@ handoffs/
 └── HO-000004-SPEC-AUTH-003.yaml
 ```
 
-A relação entre entidades pode ser mantida por IDs e por uma matriz ou grafo de rastreabilidade.
+The relationship between entities can be maintained by IDs and by a traceability matrix or graph.
 
 ---
 
-# 20. Relação com rastreabilidade no Reversa
+# 20. Relationship with traceability in Reversa
 
-A discussão anterior sobre o Reversa já apontava a necessidade de ligar:
+The previous discussion about Reversa already pointed to the need to link:
 
-- código;
+- code;
 - SPECs;
 - bugs;
 - features;
-- subsistemas;
-- módulos.
+- subsystems;
+- modules.
 
-Com handoff e diff, novas relações podem ser adicionadas.
+With handoff and diff, new relationships can be added.
 
-Exemplo:
+Example:
 
 ```text
 BUG-042
    │
-   ├── afetado_por ──> SPEC-AUTH-003
+   ├── affected_by ──> SPEC-AUTH-003
    │
-   ├── corrigido_por ──> HO-000142
+   ├── fixed_by ──> HO-000142
    │
-   ├── altera ──> src/auth/login.py
+   ├── modifies ──> src/auth/login.py
    │
-   └── verificado_por ──> TEST-AUTH-019
+   └── verified_by ──> TEST-AUTH-019
 ```
 
-O handoff pode funcionar como a entidade que registra uma transição de estado.
+The handoff can function as the entity that records a state transition.
 
-Exemplo:
+Example:
 
 ```text
 BUG-042
@@ -953,17 +952,17 @@ HO-000142
    └── HARNESS-IMPLEMENTER
 ```
 
-O meta-harness pode consultar essas relações antes de tomar decisões.
+The meta-harness can query these relationships before making decisions.
 
 ---
 
-# 21. O handoff como evento de transição
+# 21. The handoff as a transition event
 
-Uma evolução conceitual importante é tratar o handoff não apenas como documento.
+An important conceptual evolution is to treat the handoff not just as a document.
 
-Ele pode representar um **evento de transição de responsabilidade e estado**.
+It can represent a **responsibility and state transition event**.
 
-Exemplo:
+Example:
 
 ```text
 IMPLEMENTATION
@@ -973,16 +972,16 @@ IMPLEMENTATION
 REGRESSION TESTING
 ```
 
-O handoff registra:
+The handoff records:
 
-- origem;
-- destino;
-- estado anterior;
-- estado produzido;
-- evidências;
-- pendências.
+- origin;
+- destination;
+- previous state;
+- produced state;
+- evidence;
+- pending items.
 
-Exemplo:
+Example:
 
 ```yaml
 transition:
@@ -993,15 +992,15 @@ transition:
   resulting_state: fix_implemented
 ```
 
-Isso aproxima o meta-harness de uma máquina de estados.
+This brings the meta-harness closer to a state machine.
 
 ---
 
-# 22. Meta-harness como máquina de estados
+# 22. Meta-harness as a state machine
 
-O Reversa pode estruturar o meta-harness como uma máquina de estados orientada por evidências.
+Reversa can structure the meta-harness as an evidence-driven state machine.
 
-Exemplo:
+Example:
 
 ```text
 BUG_IDENTIFIED
@@ -1028,11 +1027,11 @@ AUDITED
 CLOSED
 ```
 
-Os handoffs são responsáveis por propor transições.
+The handoffs are responsible for proposing transitions.
 
-O meta-harness valida a evidência antes de aceitar a mudança de estado.
+The meta-harness validates the evidence before accepting the state change.
 
-Exemplo:
+Example:
 
 ```yaml
 requested_transition:
@@ -1040,18 +1039,18 @@ requested_transition:
   to: IMPLEMENTED
 ```
 
-O meta-harness verifica:
+The meta-harness verifies:
 
 ```text
-Existe diff?
-O diff possui arquivos?
-Os arquivos estão relacionados ao objetivo?
-O handoff explica as mudanças?
-Existe referência à SPEC?
-O comando de verificação foi executado?
+Does the diff exist?
+Does the diff contain files?
+Are the files related to the objective?
+Does the handoff explain the changes?
+Is there a reference to the SPEC?
+Was the verification command executed?
 ```
 
-Somente após a validação:
+Only after validation:
 
 ```yaml
 transition:
@@ -1060,27 +1059,27 @@ transition:
 
 ---
 
-# 23. O meta-harness não deve confiar na narrativa do agente
+# 23. The meta-harness must not trust the agent's narrative
 
-Uma regra arquitetural importante:
+An important architectural rule:
 
-> O meta-harness não deve tomar decisões apenas com base na resposta textual do agente executor.
+> The meta-harness must not make decisions based solely on the textual response of the executing agent.
 
-LLMs são sistemas geradores de linguagem.
+LLMs are language generation systems.
 
-Uma declaração como:
+A declaration like:
 
 ```text
-Todos os testes passaram.
+All tests passed.
 ```
 
-Não deve ser automaticamente aceita como evidência.
+Should not be automatically accepted as evidence.
 
-O handoff pode registrar a declaração.
+The handoff can record the declaration.
 
-A evidência deve ser coletada separadamente.
+The evidence must be collected separately.
 
-Exemplo:
+Example:
 
 ```yaml
 verification:
@@ -1093,35 +1092,35 @@ verification:
     tests_passed: 142
 ```
 
-Essa separação é extremamente importante.
+This separation is extremely important.
 
-Pode-se diferenciar:
+One can differentiate:
 
 ```text
 CLAIM
 ```
 
-e
+and
 
 ```text
 EVIDENCE
 ```
 
-O meta-harness valida claims usando evidências.
+The meta-harness validates claims using evidence.
 
 ---
 
-# 24. Claims e evidence
+# 24. Claims and evidence
 
-Uma possível estrutura:
+A possible structure:
 
 ```yaml
 claims:
   - id: CLAIM-001
-    statement: Bug de login corrigido.
+    statement: Login bug fixed.
 
   - id: CLAIM-002
-    statement: Testes de autenticação passaram.
+    statement: Authentication tests passed.
 
 evidence:
   - id: EVID-001
@@ -1135,9 +1134,9 @@ evidence:
       - CLAIM-002
 ```
 
-O meta-harness pode identificar claims sem evidência.
+The meta-harness can identify claims without evidence.
 
-Exemplo:
+Example:
 
 ```yaml
 consistency_check:
@@ -1145,21 +1144,21 @@ consistency_check:
     - CLAIM-003
 ```
 
-Resultado:
+Result:
 
 ```yaml
 decision: NEEDS_VERIFICATION
 ```
 
-Esta abordagem conecta diretamente o meta-harness ao conceito de rastreabilidade do Reversa.
+This approach directly connects the meta-harness to Reversa's traceability concept.
 
 ---
 
 # 25. Cross-Evidence Validation
 
-A função central do meta-harness pode ser definida como **validação cruzada de evidências**.
+The central function of the meta-harness can be defined as **cross-evidence validation**.
 
-Entradas:
+Inputs:
 
 ```text
 OBJECTIVE
@@ -1171,43 +1170,43 @@ TEST RESULT
 REPOSITORY STATE
 ```
 
-O meta-harness compara as relações.
+The meta-harness compares the relationships.
 
-Exemplo de perguntas:
+Example questions:
 
 ```text
-O handoff declara que a tarefa foi concluída?
+Does the handoff declare the task was completed?
              │
              ▼
-Existe diff?
+Does the diff exist?
              │
              ▼
-O diff toca arquivos relacionados ao objetivo?
+Does the diff touch files related to the objective?
              │
              ▼
-As SPECs relacionadas foram alteradas ou respeitadas?
+Were the related SPECs modified or respected?
              │
              ▼
-Os testes relacionados foram executados?
+Were the related tests executed?
              │
              ▼
-Existe risco de regressão?
+Is there a regression risk?
              │
              ▼
-Qual harness deve receber o próximo handoff?
+Which harness should receive the next handoff?
 ```
 
 ---
 
-# 26. Harnesses especializados sugeridos
+# 26. Suggested specialized harnesses
 
-A arquitetura do Reversa pode conter harnesses especializados.
+Reversa's architecture can contain specialized harnesses.
 
 ## Implementation Harness
 
-Responsável por implementar mudanças.
+Responsible for implementing changes.
 
-Entrada:
+Input:
 
 ```text
 objective
@@ -1216,7 +1215,7 @@ bugs
 constraints
 ```
 
-Saída:
+Output:
 
 ```text
 diff
@@ -1225,33 +1224,33 @@ handoff
 
 ## Diff Auditor Harness
 
-Responsável por analisar o escopo das alterações.
+Responsible for analyzing the scope of changes.
 
-Perguntas:
+Questions:
 
-- o diff está dentro do escopo?
-- existem arquivos inesperados?
-- houve alteração estrutural não declarada?
-- o diff contém mudanças suspeitas?
-- houve remoção excessiva?
+- is the diff within scope?
+- are there unexpected files?
+- was there an undeclared structural change?
+- does the diff contain suspicious changes?
+- was there excessive removal?
 
 ## Spec Consistency Harness
 
-Responsável por verificar consistência entre código e especificações.
+Responsible for verifying consistency between code and specifications.
 
-Perguntas:
+Questions:
 
-- o código continua refletindo a SPEC?
-- a alteração exige atualização da SPEC?
-- existe código sem especificação relacionada?
+- does the code still reflect the SPEC?
+- does the change require a SPEC update?
+- is there code without a related specification?
 
 ## Regression Harness
 
-Responsável por definir e executar verificações de regressão.
+Responsible for defining and executing regression checks.
 
 ## Bug Traceability Harness
 
-Responsável por relacionar:
+Responsible for relating:
 
 ```text
 BUG
@@ -1264,22 +1263,22 @@ HANDOFF
 
 ## Handoff Auditor Harness
 
-Responsável por verificar a qualidade do handoff.
+Responsible for verifying handoff quality.
 
-Perguntas:
+Questions:
 
-- o objetivo está claro?
-- o resumo explica as alterações?
-- existem decisões não documentadas?
-- os riscos foram identificados?
-- existem pendências?
-- o próximo passo é verificável?
+- is the objective clear?
+- does the summary explain the changes?
+- are there undocumented decisions?
+- were the risks identified?
+- are there pending items?
+- is the next step verifiable?
 
 ---
 
-# 27. Fluxo proposto para o Reversa
+# 27. Proposed flow for Reversa
 
-Uma possível execução:
+A possible execution:
 
 ```text
 USER GOAL
@@ -1287,16 +1286,16 @@ USER GOAL
    ▼
 META-HARNESS
    │
-   ├── identifica objetivo
-   ├── consulta SPECs
-   ├── consulta bugs
-   ├── consulta rastreabilidade
+   ├── identifies objective
+   ├── consults SPECs
+   ├── consults bugs
+   ├── consults traceability
    │
    ▼
 IMPLEMENTATION HARNESS
    │
-   ├── implementa
-   ├── gera handoff
+   ├── implements
+   ├── generates handoff
    │
    ▼
 DIFF CAPTURE
@@ -1304,10 +1303,10 @@ DIFF CAPTURE
    ▼
 META-HARNESS
    │
-   ├── compara objetivo
-   ├── compara handoff
-   ├── compara diff
-   ├── consulta SPECs
+   ├── compares objective
+   ├── compares handoff
+   ├── compares diff
+   ├── consults SPECs
    │
    ▼
 DIFF AUDITOR
@@ -1321,36 +1320,36 @@ SPEC CONSISTENCY HARNESS
    ▼
 META-HARNESS
    │
-   ├── aceita
-   ├── rejeita
-   ├── solicita correção
-   └── delega próximo passo
+   ├── accepts
+   ├── rejects
+   ├── requests correction
+   └── delegates next step
 ```
 
 ---
 
-# 28. Regra: nenhum harness termina com "done"
+# 28. Rule: no harness ends with "done"
 
-Uma regra forte pode ser definida:
+A strong rule can be defined:
 
-> Nenhum harness finaliza uma execução apenas com uma indicação de conclusão.
+> No harness finishes an execution with just a completion indicator.
 
-Toda execução deve produzir um handoff validável.
+Every execution must produce a validatable handoff.
 
-Exemplo inválido:
+Invalid example:
 
 ```yaml
 status: done
 ```
 
-Exemplo mínimo aceitável:
+Minimum acceptable example:
 
 ```yaml
 objective: BUG-042
 status: implemented
 
 summary:
-  Corrigida a validação de senha.
+  Password validation fixed.
 
 diff_reference:
   base: abc123
@@ -1368,40 +1367,40 @@ recommended_next_harness:
 
 ---
 
-# 29. Handoff como protocolo
+# 29. Handoff as protocol
 
-Uma conclusão importante desta discussão é que o Reversa pode evoluir de uma simples ferramenta de engenharia reversa de especificações para uma arquitetura capaz de definir um **protocolo de transferência de trabalho entre harnesses**.
+An important conclusion of this discussion is that Reversa can evolve from a simple reverse engineering tool for specifications to an architecture capable of defining a **work transfer protocol between harnesses**.
 
-Esse protocolo pode estabelecer:
+This protocol can establish:
 
-- formato;
+- format;
 - schema;
-- campos obrigatórios;
-- evidências;
-- transições;
-- critérios de aceitação;
-- critérios de rejeição;
-- versionamento.
+- required fields;
+- evidence;
+- transitions;
+- acceptance criteria;
+- rejection criteria;
+- versioning.
 
-Nome conceitual possível:
+Possible conceptual name:
 
 ```text
 Harness Handoff Protocol
 ```
 
-Ou:
+Or:
 
 ```text
 Meta-Harness Handoff Protocol
 ```
 
-Ou:
+Or:
 
 ```text
 Agentic Software Handoff Protocol
 ```
 
-Uma possibilidade diretamente associada ao Reversa:
+A possibility directly associated with Reversa:
 
 ```text
 Reversa Handoff Protocol
@@ -1410,23 +1409,23 @@ RHP
 
 ---
 
-# 30. Hipótese arquitetural
+# 30. Architectural hypothesis
 
-A hipótese central pode ser formulada assim:
+The central hypothesis can be formulated as follows:
 
-> Em desenvolvimento de software orientado por agentes, a continuidade confiável do trabalho depende de mecanismos explícitos de transferência de estado e validação de evidências.
+> In agent-oriented software development, reliable work continuity depends on explicit mechanisms for state transfer and evidence validation.
 
-O handoff transfere estado.
+The handoff transfers state.
 
-O diff registra mudança.
+The diff records change.
 
-Os testes produzem evidências de comportamento.
+Tests produce evidence of behavior.
 
-As SPECs definem a intenção esperada.
+SPECs define the expected intent.
 
-O meta-harness cruza essas informações e controla a continuidade.
+The meta-harness crosses this information and controls continuity.
 
-Formalmente:
+Formally:
 
 ```text
 INTENT
@@ -1440,81 +1439,81 @@ VERIFICATION
 DECISION CONTEXT
 ```
 
-O meta-harness opera sobre esse contexto.
+The meta-harness operates on this context.
 
 ---
 
-# 31. Princípio central
+# 31. Central principle
 
-A principal conclusão da conversa é:
+The main conclusion of the conversation is:
 
-> O handoff é a declaração do agente. O diff é a evidência material. A verificação comprova comportamento. A SPEC representa a intenção. O meta-harness é o mecanismo que cruza essas informações e decide a continuidade do desenvolvimento.
+> The handoff is the agent's declaration. The diff is the material evidence. Verification proves behavior. The SPEC represents the intent. The meta-harness is the mechanism that crosses this information and decides the continuation of development.
 
-Outra formulação:
+Another formulation:
 
-> Diff mostra o que mudou. Handoff explica o que aconteceu. A verificação mostra se funciona. A SPEC diz o que deveria acontecer. O meta-harness compara tudo isso.
+> Diff shows what changed. Handoff explains what happened. Verification shows if it works. The SPEC says what should happen. The meta-harness compares all of this.
 
 ---
 
-# 32. Direção para evolução do Reversa
+# 32. Direction for Reversa evolution
 
-A partir desta discussão, uma linha de evolução do Reversa seria:
+From this discussion, a line of evolution for Reversa would be:
 
-1. definir um schema formal de handoff;
-2. transformar handoff em artefato de primeira classe;
-3. capturar diff automaticamente após execuções;
-4. relacionar diff a bugs e SPECs;
-5. criar validação handoff-diff;
-6. separar claims de evidence;
-7. introduzir harnesses especializados;
-8. modelar o meta-harness como máquina de estados;
-9. utilizar handoffs como eventos de transição;
-10. manter uma matriz ou grafo de rastreabilidade entre:
+1. define a formal handoff schema;
+2. transform handoff into a first-class artifact;
+3. automatically capture diff after executions;
+4. relate diff to bugs and SPECs;
+5. create handoff-diff validation;
+6. separate claims from evidence;
+7. introduce specialized harnesses;
+8. model the meta-harness as a state machine;
+9. use handoffs as transition events;
+10. maintain a traceability matrix or graph between:
    - bugs;
    - SPECs;
-   - código;
+   - code;
    - diffs;
-   - testes;
+   - tests;
    - handoffs;
-   - decisões;
+   - decisions;
    - harnesses;
-11. impedir conclusão sem evidência;
-12. permitir continuidade entre:
-   - sessões do Claude Code;
-   - sessões do Codex;
-   - modelos diferentes;
-   - harnesses diferentes;
-   - agentes especializados.
+11. prevent completion without evidence;
+12. allow continuity between:
+   - Claude Code sessions;
+   - Codex sessions;
+   - different models;
+   - different harnesses;
+   - specialized agents.
 
 ---
 
-# 33. Visão final
+# 33. Final vision
 
-O Reversa já possui uma motivação relacionada à reconstrução e manutenção de especificações a partir do código.
+Reversa already has a motivation related to the reconstruction and maintenance of specifications from code.
 
-Com meta-harness, handoff e diff, sua função pode se ampliar.
+With meta-harness, handoff, and diff, its function can expand.
 
-O Reversa pode atuar como uma camada de **coordenação, memória operacional e rastreabilidade para desenvolvimento agentic**.
+Reversa can act as a **coordination, operational memory, and traceability layer for agentic development**.
 
-Nesse modelo:
+In this model:
 
 ```text
-SPEC define intenção.
-BUG registra desvio.
-HARNESS executa.
-DIFF registra mudança.
-HANDOFF registra estado e continuidade.
-TEST fornece evidência.
-META-HARNESS decide.
-REVERSA mantém a rastreabilidade.
+SPEC defines intent.
+BUG records deviation.
+HARNESS executes.
+DIFF records change.
+HANDOFF records state and continuity.
+TEST provides evidence.
+META-HARNESS decides.
+REVERSA maintains traceability.
 ```
 
-A arquitetura deixa de depender da memória temporária de uma sessão de LLM.
+The architecture stops depending on the temporary memory of an LLM session.
 
-O estado do desenvolvimento passa a existir em artefatos explícitos, estruturados e auditáveis.
+The state of development comes to exist in explicit, structured, and auditable artifacts.
 
-O objetivo não é fazer agentes conversarem mais.
+The objective is not to make agents converse more.
 
-O objetivo é fazer agentes **transferirem trabalho com evidências suficientes para que outro agente continue de forma confiável**.
+The objective is to make agents **transfer work with sufficient evidence for another agent to continue reliably**.
 
-Essa pode ser uma das bases conceituais para a adoção de **meta-harness no Reversa**.
+This can be one of the conceptual foundations for the adoption of **meta-harness in Reversa**.

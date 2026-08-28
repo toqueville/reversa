@@ -1,174 +1,145 @@
-# HANDOFF — Otimização de contexto do Reversa
+# HANDOFF — Reversa context optimization
 
-> **Para:** outra sessão do Claude Code
-> **Natureza:** **otimização**, não refatoração. O comportamento do Reversa deve ficar **idêntico**.
-> **Objetivo:** economizar tokens do usuário reduzindo a carga permanente de contexto das 49 skills
-> **Origem:** relatório `mattpocock-skills × Reversa`, 30/07/2026
-> **Esforço:** 1–2 h, quase todo scriptável
-> **Autor do Reversa:** `sandeco` — é o próprio usuário desta sessão
+> **To:** another Claude Code session
+> **Nature:** **optimization**, not refactoring. Reversa's behavior should remain **identical**.
+> **Objective:** save user tokens by reducing the permanent context load of the 49 skills
+> **Origin:** `mattpocock-skills x Reversa` report, 07/30/2026
+> **Effort:** 1-2 h, almost entirely scriptable
+> **Reversa author:** `sandeco` — is the user of this session themselves
 
 ---
 
-## O que o usuário pediu
+## What the user asked for
 
-Duas **características** do `mattpocock-skills`, nomeadas por ele:
+Two **characteristics** of `mattpocock-skills`, named by the user:
 
-| Característica | O que significa |
+| Characteristic | What it means |
 |---|---|
-| **Economia de contexto** | *"O eixo de invocação é tratado como decisão de engenharia, com custo medido e assumido"* |
-| **Portabilidade real entre harnesses** | *"41 de 41 skills com marca dupla (Claude + Codex), 0 descasamentos"* |
+| **Context economy** | *"The invocation axis is treated as an engineering decision, with measured and assumed cost"* |
+| **Real portability between harnesses** | *"41 of 41 skills with dual mark (Claude + Codex), 0 mismatches"* |
 
-⚠️ **Repare no que faz delas características, e não conquistas pontuais:** *"decisão de engenharia com
-custo medido"* e *"0 descasamentos"* são propriedades que se **mantêm** — não estados que se alcança uma
-vez. Marcar as 49 skills hoje entrega o estado; sem política escrita e sem verificador, o Reversa volta a
-derivar na próxima skill adicionada.
+Warning: **Notice what makes these characteristics, not one-time achievements:** *"engineering decision with measured cost"* and *"0 mismatches"* are properties that are **maintained** — not states that are reached once. Marking the 49 skills today delivers the state; without a written policy and without a verifier, Reversa will drift again on the next skill added.
 
-Por isso a execução tem 8 etapas, não 5: as **etapas 1–5** produzem o estado, as **6–8** o tornam
-permanente. E há um ponto em que o Reversa pode **superar** a referência — ver Etapa 7.
+That is why the execution has 8 steps, not 5: **steps 1-5** produce the state, **6-8** make it permanent. And there is a point where Reversa can **surpass** the reference — see Step 7.
 
 ---
 
-## ⚠️ Regra que governa esta tarefa
+## Warning: Rule governing this task
 
-**O Reversa funcionando hoje vale mais do que qualquer economia de tokens.**
+**Reversa working today is worth more than any token savings.**
 
-Isto é uma otimização de custo, não uma melhoria de funcionalidade. Se em qualquer ponto houver dúvida
-entre "economiza mais" e "com certeza não quebra", **escolha não quebrar**. Uma economia de 85% que
-introduza um bug intermitente no orquestrador é um prejuízo, não um ganho.
+This is a cost optimization, not a functionality improvement. If at any point there is doubt between "saves more" and "definitely does not break", **choose not to break**. An 85% savings that introduces an intermittent bug in the orchestrator is a loss, not a gain.
 
-Por isso a §4 executa em **8 etapas, cada uma com commit próprio e o framework funcionando ao final**.
-Não pule etapas nem agrupe commits.
+That is why section 4 executes in **8 steps, each with its own commit and the framework working at the end**. Do not skip steps or combine commits.
 
 ---
 
-## TL;DR — o que se ganha
+## TL;DR — what you gain
 
-O Reversa injeta **~3.677 tokens no contexto de toda requisição**, antes de qualquer trabalho começar,
-porque as 49 skills são model-invoked e cada uma mantém sua `description` permanentemente carregada.
+Reversa injects **~3,677 tokens into the context of every request**, before any work begins, because the 49 skills are model-invoked and each one keeps its `description` permanently loaded.
 
-| | Hoje | Depois (Cenário B) |
+| | Today | After (Scenario B) |
 |---|---:|---:|
-| Skills que ocupam contexto | 49 | 8 |
-| Caracteres injetados | 14.708 | 2.336 |
-| Tokens permanentes | **~3.677** | **~584** |
-| | | **−3.093 tokens (−85%)** |
+| Skills occupying context | 49 | 8 |
+| Injected characters | 14,708 | 2,336 |
+| Permanent tokens | **~3,677** | **~584** |
+| | | **-3,093 tokens (-85%)** |
 
-**O que essa economia significa, honestamente:**
+**What this savings honestly means:**
 
-- 🟢 **Espaço de janela de contexto** — 3.093 tokens devolvidos ao trabalho real. Este é o ganho mais
-  durável e não depende de cache. Numa análise longa, é espaço que deixa de ser desperdiçado.
-- 🟢 **Qualidade de roteamento** — hoje o modelo escolhe entre 49 descrições concorrentes, muitas quase
-  idênticas entre si (13 skills `specialist` de manutenção com fraseado parecido). Com 8, a escolha fica
-  mais precisa. Este ganho é qualitativo e provavelmente maior que o de custo.
-- 🟡 **Custo em tokens** — é real, mas parcialmente mitigado por prompt caching: depois da primeira
-  requisição, boa parte vira leitura de cache, mais barata que input novo. **Não prometa ao usuário uma
-  economia proporcional na fatura.** O ganho garantido é o de janela e o de precisão.
+- **Context window space** — 3,093 tokens returned to real work. This is the most durable gain and does not depend on cache. In a long analysis, it is space that stops being wasted.
+- **Routing quality** — today the model chooses between 49 competing descriptions, many nearly identical to each other (13 `specialist` maintenance skills with similar phrasing). With 8, the choice becomes more precise. This qualitative gain is probably larger than the cost gain.
+- **Token cost** — it is real, but partially mitigated by prompt caching: after the first request, a good portion becomes cache reads, cheaper than new input. **Do not promise the user a proportional savings on the bill.** The guaranteed gain is in window space and precision.
 
 ---
 
-## §0 · LEIA ANTES DE TOCAR EM QUALQUER ARQUIVO
+## Section 0 - READ BEFORE TOUCHING ANY FILE
 
-### ⛔ Armadilha 1 — `git branch` NÃO protege este trabalho
+### Pitfall 1 — `git branch` does NOT protect this work
 
-O usuário pediu um branch para esta remodelação. **Fazer isso do jeito óbvio não funciona**, e é
-importante entender por quê antes de tentar:
-
-```
-pocoyo-skills/  →  é um repositório git
-                   .claude/skills/  →  0 arquivos rastreados  (untracked)
-                   .agents/skills/  →  0 arquivos rastreados  (untracked)
-```
-
-**Arquivos untracked não pertencem a branch nenhum.** Eles atravessam `git checkout` intactos. Criar um
-branch em `pocoyo-skills`, editar as skills e depois voltar para `main` **não desfaz nada** — as
-alterações continuam lá, e você fica sem rollback justamente na tarefa em que o rollback é o principal
-mecanismo de segurança.
-
-Pior: o `origin` deste repositório é **`https://github.com/mattpocock/skills.git`** — repositório de
-outra pessoa. Ele não é o lugar do código do Reversa.
-
-👉 **A solução está na §1.** Não improvise um branch aqui.
-
-### ⛔ Armadilha 2 — Existem DUAS cópias de tudo, e não são links
+The user asked for a branch for this rework. **Doing this the obvious way does not work**, and it is important to understand why before trying:
 
 ```
-pocoyo-skills/.claude/skills/   ← 49 skills, 108 arquivos
-pocoyo-skills/.agents/skills/   ← 49 skills, 108 arquivos
+pocoyo-skills/  →  is a git repository
+                   .claude/skills/  →  0 tracked files  (untracked)
+                   .agents/skills/  →  0 tracked files  (untracked)
 ```
 
-Cópias **independentes** (inodes diferentes), hoje byte a byte idênticas (verificado com `diff -rq`).
+**Untracked files do not belong to any branch.** They survive `git checkout` intact. Creating a branch in `pocoyo-skills`, editing the skills, and then switching back to `main` **does not undo anything** — the changes remain there, and you lose rollback precisely on the task where rollback is the main safety mechanism.
 
-**Toda alteração vai nas duas.** Se você mudar só uma, o Reversa passa a se comportar diferente conforme
-a engine que o carregou — um bug quase irrastreável depois. Confira ao final:
+Worse: the `origin` of this repository is **`https://github.com/mattpocock/skills.git`** — someone else's repository. It is not the place for Reversa's code.
+
+The **solution is in section 1.** Do not improvise a branch here.
+
+### Pitfall 2 — There are TWO copies of everything, and they are not links
+
+```
+pocoyo-skills/.claude/skills/   ← 49 skills, 108 files
+pocoyo-skills/.agents/skills/   ← 49 skills, 108 files
+```
+
+**Independent** copies (different inodes), currently byte-for-byte identical (verified with `diff -rq`).
+
+**Every change goes in both.** If you change only one, Reversa will behave differently depending on which engine loaded it — a nearly untraceable bug afterwards. Check at the end:
 
 ```bash
-diff -rq pocoyo-skills/.claude/skills pocoyo-skills/.agents/skills   # precisa sair VAZIO
+diff -rq pocoyo-skills/.claude/skills pocoyo-skills/.agents/skills   # must return EMPTY
 ```
 
-### ⛔ Armadilha 3 — Não confunda o que é do Reversa com o que é do legado
+### Pitfall 3 — Do not confuse what belongs to Reversa with what is legacy
 
-`pocoyo-skills/` é um **repositório alheio** (`mattpocock/skills`) que foi alvo de engenharia reversa. O
-Reversa está apenas instalado dentro dele.
+`pocoyo-skills/` is a **third-party repository** (`mattpocock/skills`) that was the target of reverse engineering. Reversa is merely installed inside it.
 
-| Caminho | De quem é | Pode mexer? |
+| Path | Belongs to | Can modify? |
 |---|---|---|
-| `.claude/skills/reversa*` | Instalação do Reversa, untracked | ✅ é o alvo |
-| `.agents/skills/reversa*` | Instalação do Reversa, untracked | ✅ é o alvo |
-| `.agents/adr/`, `.agents/invocation.md`, `.agents/writing-docs.md` | **Do legado**, rastreados | ⛔ **NÃO** |
-| `skills/`, `docs/`, `CLAUDE.md`, `README.md`, `package.json` | **Do legado**, rastreados | ⛔ **NÃO** |
-| `_reversa_sdd/`, `.reversa/` | Artefatos da extração, concluída | ⛔ fora do escopo |
+| `.claude/skills/reversa*` | Reversa installation, untracked | Yes, this is the target |
+| `.agents/skills/reversa*` | Reversa installation, untracked | Yes, this is the target |
+| `.agents/adr/`, `.agents/invocation.md`, `.agents/writing-docs.md` | **Legacy**, tracked | **NO** |
+| `skills/`, `docs/`, `CLAUDE.md`, `README.md`, `package.json` | **Legacy**, tracked | **NO** |
+| `_reversa_sdd/`, `.reversa/` | Extraction artifacts, completed | Out of scope |
 
-⚠️ `.agents/` tem conteúdo dos **dois**: `.agents/skills/` é do Reversa; `.agents/adr/` e
-`.agents/invocation.md` são do legado e estão versionados.
+Warning: `.agents/` has content from **both**: `.agents/skills/` belongs to Reversa; `.agents/adr/` and `.agents/invocation.md` are legacy and are versioned.
 
-### ⛔ Armadilha 4 — `git status` mente neste repositório
+### Pitfall 4 — `git status` lies in this repository
 
-167 arquivos aparecem modificados desde 26/07, **antes** de qualquer trabalho. É conversão CRLF do mount
-Windows. Um `git diff` mostra `-node_modules` / `+node_modules` — texto idêntico, só o `\r`.
+167 files appear modified since 07/26, **before** any work. It is CRLF conversion from the Windows mount. A `git diff` shows `-node_modules` / `+node_modules` — identical text, just the `\r`.
 
-- **Não use `git status`/`git diff` de `pocoyo-skills`** para conferir seu trabalho.
-- **Os arquivos têm CRLF.** `sed -n '/^---$/,/^---$/p'` **não casa**, porque a linha é `---\r`. Todo
-  script precisa normalizar (`.replace("\r\n","\n")`) e **restaurar o CRLF ao gravar**. O script da §4.3
-  já faz isso.
+- **Do not use `git status`/`git diff` from `pocoyo-skills`** to check your work.
+- **The files have CRLF.** `sed -n '/^---$/,/^---$/p'` **does not match**, because the line is `---\r`. Every script needs to normalize (`.replace("\r\n","\n")`) and **restore CRLF when writing**. The section 4.3 script already does this.
 
-### ⛔ Armadilha 5 — `npx reversa update` desfaz tudo
+### Pitfall 5 — `npx reversa update` undoes everything
 
-Versão instalada: `1.2.56`, do pacote npm `reversa`. **Não existe repositório-fonte do Reversa nesta
-máquina** — procurei.
+Installed version: `1.2.56`, from the npm package `reversa`. **There is no Reversa source repository on this machine** — I searched.
 
-Como o usuário é o autor do Reversa, a correção provavelmente precisa subir para o fonte. O repositório
-da §1 serve exatamente como o patch a ser aplicado lá.
+Since the user is the Reversa author, the fix probably needs to go upstream to the source. The section 1 repository serves exactly as the patch to be applied there.
 
-👉 **Pergunte a ele:** essa otimização deve ir para o repositório-fonte do Reversa? Se sim, peça o
-caminho. Não rode `npx reversa update` durante a tarefa.
+**Ask the user:** should this optimization go to the Reversa source repository? If yes, ask for the path. Do not run `npx reversa update` during the task.
 
 ---
 
-## §1 · Estratégia de git — faça um repositório dedicado
+## Section 1 - Git strategy — create a dedicated repository
 
-Como a Armadilha 1 mostra, branch em `pocoyo-skills` não dá rollback. A solução dá **rollback real,
-diff real e um patch aproveitável no fonte**:
+As Pitfall 1 shows, a branch in `pocoyo-skills` does not give rollback. The solution provides **real rollback, real diff, and a reusable patch for the source**:
 
 ```bash
 cd /workspaces/CHUPA-CABRA
 mkdir -p reversa-otimizacao && cd reversa-otimizacao
 
-# a instalação vira um repositório de verdade
+# the installation becomes a real repository
 cp -r ../pocoyo-skills/.claude/skills claude-skills
 cp -r ../pocoyo-skills/.agents/skills agents-skills
 
 git init
 git add -A
-git commit -m "baseline: Reversa 1.2.56 como instalado, sem alterações"
+git commit -m "baseline: Reversa 1.2.56 as installed, without changes"
 git tag baseline
 
 git switch -c otimizacao/carga-de-contexto
 ```
 
-A partir daqui você tem o que o usuário pediu: **um branch onde a remodelação acontece**, com `baseline`
-intocado para comparar e voltar.
+From here you have what the user asked for: **a branch where the rework happens**, with `baseline` untouched for comparison and rollback.
 
-**Ao final**, depois de todas as verificações da §6 passarem, sincronize de volta:
+**At the end**, after all section 6 verifications pass, sync back:
 
 ```bash
 cd /workspaces/CHUPA-CABRA/reversa-otimizacao
@@ -176,7 +147,7 @@ rsync -a --delete claude-skills/ ../pocoyo-skills/.claude/skills/
 rsync -a --delete agents-skills/ ../pocoyo-skills/.agents/skills/
 ```
 
-**Rollback a qualquer momento**, mesmo depois de sincronizar:
+**Rollback at any time**, even after syncing:
 
 ```bash
 cd /workspaces/CHUPA-CABRA/reversa-otimizacao
@@ -185,158 +156,134 @@ rsync -a --delete claude-skills/ ../pocoyo-skills/.claude/skills/
 rsync -a --delete agents-skills/ ../pocoyo-skills/.agents/skills/
 ```
 
-> ℹ️ A identidade do git já está configurada (`sandeco` / `physialtda@gmail.com`), não precisa pedir.
+> Note: The git identity is already configured (`sandeco` / `physialtda@gmail.com`), no need to ask.
 
 ---
 
-## §2 · O problema
+## Section 2 - The problem
 
-`description` existe para o **modelo** descobrir a skill sozinho. Uma skill que o humano invoca digitando
-`/nome` não precisa ser descoberta — já foi escolhida. É para isso que existe
-`disable-model-invocation: true`: a skill continua alcançável pelo humano e some do contexto do modelo.
+`description` exists for the **model** to discover the skill on its own. A skill that the human invokes by typing `/name` does not need to be discovered — it was already chosen. That is what `disable-model-invocation: true` is for: the skill remains reachable by the human and disappears from the model's context.
 
-O mattpocock aplica em **24 das 41** skills. O Reversa, em **0 de 49**.
+mattpocock applies it to **24 of 41** skills. Reversa, to **0 of 49**.
 
-### ⚠️ Correção a um erro do relatório de origem
+### Correction to an error in the source report
 
-O PDF, seção 7, afirma que *"a maioria dos agentes reversa-* nunca precisa ser descoberta por ninguém…
-são chamados pelo orquestrador"* e propõe marcar "os outros ~43".
+The PDF, section 7, states that *"most reversa-* agents never need to be discovered by anyone... they are called by the orchestrator"* and proposes marking "the other ~43".
 
-**Está errado.** A medição mostra que **34 das 49 declaram um comando `/nome` que o usuário digita** na
-própria `description`. Só 15 são exclusivamente do orquestrador.
+**This is wrong.** The measurement shows that **34 of 49 declare a `/name` command that the user types** in the `description` itself. Only 15 are exclusively for the orchestrator.
 
-Mas a conclusão prática fica **mais forte**:
+But the practical conclusion becomes **stronger**:
 
-- As **34 que o usuário digita** são o caso canônico de user-invoked — é literalmente para isso que a
-  marca existe.
-- As **15 do orquestrador** também não precisam de `description`: quem as alcança é outra skill lendo o
-  arquivo, não o modelo escolhendo (ver §4.2).
+- The **34 that the user types** are the canonical case of user-invoked — it is literally what the mark exists for.
+- The **15 from the orchestrator** also do not need `description`: what reaches them is another skill reading the file, not the model choosing (see section 4.2).
 
-Use os números deste documento, não os do PDF.
+Use the numbers from this document, not those from the PDF.
 
 ---
 
-## §3 · A decisão
+## Section 3 - The decision
 
-| | Skills model-invoked | Chars | Tokens | Economia |
+| | Model-invoked skills | Chars | Tokens | Savings |
 |---|---:|---:|---:|---:|
-| Hoje | 49 | 14.708 | ~3.677 | — |
-| **Cenário A** — só `reversa` | 1 | 291 | ~72 | −99% |
-| **Cenário B** — 8 orquestradores ✅ | 8 | 2.336 | ~584 | **−85%** |
+| Today | 49 | 14,708 | ~3,677 | — |
+| **Scenario A** — only `reversa` | 1 | 291 | ~72 | -99% |
+| **Scenario B** — 8 orchestrators | 8 | 2,336 | ~584 | **-85%** |
 
-**Cenário B mantém model-invoked:** `reversa`, `reversa-new`, `reversa-forward`, `reversa-migrate`,
-`reversa-autonomous`, `reversa-agents-help`, `reversa-debugger`, `reversa-refactor`.
+**Scenario B keeps model-invoked:** `reversa`, `reversa-new`, `reversa-forward`, `reversa-migrate`, `reversa-autonomous`, `reversa-agents-help`, `reversa-debugger`, `reversa-refactor`.
 
-**Recomendo B, e a razão é a regra do topo deste documento.** O `CLAUDE.md` declara que o Reversa ativa
-*"quando o usuário digitar `/reversa` **ou a palavra `reversa` sozinha em uma mensagem**"*. Reconhecer
-linguagem natural exige que o modelo veja a skill. O Cenário A economiza mais 512 tokens e **muda o
-comportamento do produto** — o usuário perde o roteamento por linguagem natural para os fluxos. Isso
-é regressão disfarçada de otimização.
+**I recommend B, and the reason is the rule at the top of this document.** The `CLAUDE.md` declares that Reversa activates *"when the user types `/reversa` **or the word `reversa` alone in a message**"*. Recognizing natural language requires the model to see the skill. Scenario A saves 512 more tokens and **changes the product behavior** — the user loses natural language routing to the flows. That is regression disguised as optimization.
 
-👉 **Confirme A ou B com o usuário antes de executar.**
+**Confirm A or B with the user before executing.**
 
 ---
 
-## §4 · Execução — 8 etapas, framework funcionando em cada uma
+## Section 4 - Execution — 8 steps, framework working at each one
 
-> **Etapas 1–5** produzem o *estado* certo. **Etapas 6–8** transformam esse estado em **característica
-> permanente** — sem elas o Reversa volta a derivar na próxima skill que alguém adicionar.
+> **Steps 1-5** produce the right *state*. **Steps 6-8** transform that state into a **permanent characteristic** — without them, Reversa will drift again on the next skill someone adds.
 
-### 4.1 · Etapa 1 — baseline e teste funcional ANTES
+### 4.1 - Step 1 — baseline and functional test BEFORE
 
-Faça o repositório da §1. Depois, **antes de mudar qualquer coisa**, estabeleça que o framework funciona
-hoje e registre como:
+Create the repository from section 1. Then, **before changing anything**, establish that the framework works today and record how:
 
-- Numa sessão limpa, digite `/reversa` → precisa carregar e ler `.reversa/state.json`
-- Digite `/reversa-agents-help` → o catálogo precisa aparecer
-- Anote o que aconteceu
+- In a clean session, type `/reversa` — it needs to load and read `.reversa/state.json`
+- Type `/reversa-agents-help` — the catalog needs to appear
+- Note what happened
 
-Sem esse "antes", você não tem como saber se um problema no "depois" foi você quem causou.
+Without this "before", you have no way to know if a problem in the "after" was caused by you.
 
-⚠️ `.reversa/state.json` está com `phase: concluido` — a extração foi encerrada. Para testar o caminho do
-Scout sem sujar esse estado, faça backup de `.reversa/` ou aponte o Reversa para outro diretório.
+Warning: `.reversa/state.json` has `phase: concluido` — the extraction was completed. To test the Scout path without dirtying that state, back up `.reversa/` or point Reversa to another directory.
 
 ```bash
-git commit --allow-empty -m "etapa 1: baseline validado, framework funcionando"
+git commit --allow-empty -m "step 1: baseline validated, framework working"
 ```
 
-### 4.2 · Etapa 2 — corrigir os sites de invocação (ANTES das marcas)
+### 4.2 - Step 2 — fix invocation sites (BEFORE the marks)
 
-**Esta é a etapa que pode quebrar o framework, e por isso vem primeiro e sozinha.**
+**This is the step that can break the framework, and that is why it comes first and alone.**
 
-Uma skill user-invoked **não pode ser invocada por outra skill** — sem `description`, nada além do humano
-a alcança. Isso colide com o modo de operar do orquestrador.
+A user-invoked skill **cannot be invoked by another skill** — without `description`, nothing besides the human reaches it. This collides with the orchestrator's mode of operation.
 
-🟢 **A boa notícia:** o caminho alternativo **já existe** em 3 dos 4 sites — ler o `SKILL.md` e executar
-no contexto atual, que funciona independentemente de qualquer marca. A correção é **inverter a
-precedência**: o que hoje é fallback vira o caminho primário.
+**The good news:** the alternative path **already exists** in 3 of the 4 sites — read the `SKILL.md` and execute in the current context, which works regardless of any mark. The fix is to **invert the precedence**: what is currently the fallback becomes the primary path.
 
-**Os 4 sites, mapeados por grep:**
+**The 4 sites, mapped by grep:**
 
-| # | Arquivo | Linha | Fallback de leitura? |
+| # | File | Line | Has reading fallback? |
 |---|---|---|---|
-| 1 | `reversa/SKILL.md` | 26 | ✅ sim |
-| 2 | `reversa-migrate/SKILL.md` | 102 | ✅ sim |
-| 3 | `reversa-new/SKILL.md` | 195 | ✅ sim |
-| 4 | `reversa/references/step-01-first-run.md` | 63 | 🔴 **NÃO** |
-| 5 | `reversa-autonomous/SKILL.md` | 98 | 🟡 indireto — *"exatamente como o `reversa` faz"* |
+| 1 | `reversa/SKILL.md` | 26 | Yes |
+| 2 | `reversa-migrate/SKILL.md` | 102 | Yes |
+| 3 | `reversa-new/SKILL.md` | 195 | Yes |
+| 4 | `reversa/references/step-01-first-run.md` | 63 | **NO** |
+| 5 | `reversa-autonomous/SKILL.md` | 98 | Indirect — *"exactly as `reversa` does"* |
 
-🔴 **O site 4 é o que quebra.** Texto atual: *"Após confirmação, ative o skill `reversa-scout`."* — manda
-ativar por nome, sem alternativa, e o `reversa-scout` é justamente uma das que ficarão user-invoked.
+**Site 4 is the one that breaks.** Current text: *"After confirmation, activate the `reversa-scout` skill."* — it commands activation by name, without alternative, and `reversa-scout` is precisely one of those that will become user-invoked.
 
-Redação sugerida para o site 1 (aplique o mesmo padrão nos outros):
+Suggested wording for site 1 (apply the same pattern to the others):
 
-> `2. Leia `.agents/skills/reversa-[agente]/SKILL.md` na íntegra e execute as instruções no contexto atual. (Se a sua engine suportar ativação direta por nome e o agente estiver acessível, ativá-lo diretamente é equivalente.)`
+> `2. Read `.agents/skills/reversa-[agent]/SKILL.md` in full and execute the instructions in the current context. (If your engine supports direct activation by name and the agent is accessible, activating it directly is equivalent.)`
 
-Para o site 4:
+For site 4:
 
-> `Após confirmação, leia `.agents/skills/reversa-scout/SKILL.md` na íntegra e execute no contexto atual.`
+> `After confirmation, read `.agents/skills/reversa-scout/SKILL.md` in full and execute in the current context.`
 
-**Ao final desta etapa, o framework precisa estar funcionando exatamente como antes** — nenhuma marca foi
-adicionada ainda, só a ordem de precedência mudou. Repita o teste da Etapa 1.
+**At the end of this step, the framework needs to be working exactly as before** — no marks have been added yet, only the order of precedence changed. Repeat the Step 1 test.
 
 ```bash
-git commit -am "etapa 2: leitura direta do SKILL.md como caminho primário nos 4 sites de invocação"
+git commit -am "step 2: direct SKILL.md reading as primary path in the 4 invocation sites"
 ```
 
-### 4.3 · Etapa 3 — marcar UMA skill e validar de ponta a ponta
+### 4.3 - Step 3 — mark ONE skill and validate end to end
 
-**Não marque as 41 de uma vez.** Marque **uma** e prove que a abordagem funciona.
+**Do not mark all 41 at once.** Mark **one** and prove the approach works.
 
-Escolha `reversa-scout`: é a mais crítica das user-invoked (é a primeira que o orquestrador chama, e é
-o alvo do site 4). Se funcionar com ela, funciona com todas.
+Choose `reversa-scout`: it is the most critical of the user-invoked skills (it is the first the orchestrator calls, and it is the target of site 4). If it works with this one, it works with all.
 
-Adicione **uma linha** ao frontmatter, nas duas árvores:
+Add **one line** to the frontmatter, in both trees:
 
 ```yaml
 ---
 name: reversa-scout
-description: Mapeia a superfície do projeto legado — ...
-disable-model-invocation: true          # ← só isto
+description: Maps the legacy project surface — ...
+disable-model-invocation: true          # ← just this
 license: MIT
 ...
 ---
 ```
 
-✅ **MANTENHA a `description`.** Não remova. Verifiquei as 24 user-invoked do mattpocock: **todas as 24
-mantêm a `description`** e só acrescentam a flag. A `description` continua servindo à listagem de
-comandos que o humano vê; é a **flag** que tira a skill do contexto do modelo.
+**KEEP the `description`.** Do not remove it. I verified the 24 user-invoked from mattpocock: **all 24 keep the `description`** and only add the flag. The `description` continues serving the command listing that the human sees; it is the **flag** that removes the skill from the model's context.
 
-**Teste agora, numa sessão nova:**
-- `/reversa` consegue chegar ao Scout e executá-lo? (é o site 4 sendo exercitado)
-- `/reversa-scout` digitado direto ainda funciona?
+**Test now, in a new session:**
+- Can `/reversa` reach the Scout and execute it? (this exercises site 4)
+- Does `/reversa-scout` typed directly still work?
 
-**Se qualquer um falhar, PARE.** Volte com `git checkout baseline -- .` e reporte ao usuário. Não siga
-para a Etapa 4 com dúvida.
+**If either fails, STOP.** Revert with `git checkout baseline -- .` and report to the user. Do not proceed to Step 4 with doubt.
 
 ```bash
-git commit -am "etapa 3: reversa-scout como user-invoked, validado ponta a ponta"
+git commit -am "step 3: reversa-scout as user-invoked, validated end to end"
 ```
 
-### 4.4 · Etapa 4 — marcar as 40 restantes
+### 4.4 - Step 4 — mark the remaining 40
 
-Script validado em sandbox: **82 arquivos alterados** (41 skills × 2 árvores), inserção no lugar certo,
-skills de controle intactas, idempotente.
+Script validated in sandbox: **82 files changed** (41 skills x 2 trees), insertion in the right place, control skills intact, idempotent.
 
 ```python
 #!/usr/bin/env python3
@@ -345,7 +292,7 @@ import re, pathlib
 BASE = pathlib.Path("/workspaces/CHUPA-CABRA/reversa-otimizacao")
 ARVORES = [BASE/"claude-skills", BASE/"agents-skills"]
 
-# Cenário B — permanecem model-invoked
+# Scenario B — remain model-invoked
 MANTER = {
     "reversa", "reversa-new", "reversa-forward", "reversa-migrate",
     "reversa-autonomous", "reversa-agents-help", "reversa-debugger", "reversa-refactor",
@@ -360,217 +307,182 @@ for arvore in ARVORES:
         crlf = "\r\n" in bruto
         t = bruto.replace("\r\n", "\n")
         if re.search(r"^disable-model-invocation:", t, re.M):
-            continue                                   # idempotente
+            continue                                   # idempotent
         m = re.match(r"^---\n(.*?)\n---\n", t, re.S)
         if not m:
-            print(f"  !! sem frontmatter: {p}"); continue
+            print(f"  !! missing frontmatter: {p}"); continue
         fm = m.group(1)
         novo_fm, n = re.subn(
             r"(^description:\s*(?:.+?)(?=\n[a-zA-Z_-]+:|\Z))",
             r"\1\ndisable-model-invocation: true",
             fm, count=1, flags=re.S | re.M)
         if n != 1:
-            print(f"  !! description não localizada: {p}"); continue
+            print(f"  !! description not found: {p}"); continue
         t = t[:m.start(1)] + novo_fm + t[m.end(1):]
         if crlf:
             t = t.replace("\n", "\r\n")
         p.write_text(t, encoding="utf-8")
         alterados += 1
 
-print(f"{alterados} arquivos alterados (esperado: 82)")
+print(f"{alterados} files changed (expected: 82)")
 ```
 
-⚠️ **Se o número não for 82, pare e investigue.** (80 se a Etapa 3 já marcou o Scout — confira qual é o
-seu caso antes de concluir que houve erro.)
+Warning: **If the number is not 82, stop and investigate.** (80 if Step 3 already marked the Scout — check your case before concluding there was an error.)
 
 ```bash
-git diff --stat            # revise antes de commitar
-git commit -am "etapa 4: 41 skills como user-invoked (cenário B)"
+git diff --stat            # review before committing
+git commit -am "step 4: 41 skills as user-invoked (scenario B)"
 ```
 
-### 4.5 · Etapa 5 — a marca do Codex
+### 4.5 - Step 5 — the Codex mark
 
-Toda skill do Reversa declara `compatibility: Claude Code, Codex, Cursor, Gemini CLI...`, mas existem
-**0 arquivos `agents/openai.yaml` em 49 skills**. A política de invocação não atravessa para o Codex.
+Every Reversa skill declares `compatibility: Claude Code, Codex, Cursor, Gemini CLI...`, but there are **0 `agents/openai.yaml` files in 49 skills**. The invocation policy does not cross over to Codex.
 
-Isso **ganha urgência com a Etapa 4**: sem o `openai.yaml`, a economia de contexto vale só no Claude
-Code — no Codex as 49 continuam implicitamente invocáveis.
+This **gains urgency with Step 4**: without the `openai.yaml`, the context savings only applies in Claude Code — in Codex all 49 remain implicitly invocable.
 
-O mattpocock resolve com um eixo conceitual e **duas marcas físicas em lockstep**: 41 de 41 skills
-marcadas nos dois formatos, **zero descasamentos**.
+mattpocock solves this with a conceptual axis and **two physical marks in lockstep**: 41 of 41 skills marked in both formats, **zero mismatches**.
 
-| Estado | Claude Code (`SKILL.md`) | Codex (`agents/openai.yaml`) |
+| State | Claude Code (`SKILL.md`) | Codex (`agents/openai.yaml`) |
 |---|---|---|
-| Model-invoked | ausência da flag | só o bloco `interface:` |
+| Model-invoked | absence of flag | only the `interface:` block |
 | User-invoked | `disable-model-invocation: true` | `interface:` **+** `policy.allow_implicit_invocation: false` |
 
-Crie `<skill>/agents/openai.yaml` nas **duas** árvores.
+Create `<skill>/agents/openai.yaml` in **both** trees.
 
-**Para as 41 user-invoked:**
+**For the 41 user-invoked:**
 ```yaml
 interface:
   display_name: "Reversa Scout"
-  short_description: "Mapeia estrutura, stack e entry points do projeto"
+  short_description: "Maps project structure, stack, and entry points"
 policy:
   allow_implicit_invocation: false
 ```
 
-**Para as 8 model-invoked:**
+**For the 8 model-invoked:**
 ```yaml
 interface:
   display_name: "Reversa"
-  short_description: "Orquestra a análise de um sistema legado"
+  short_description: "Orchestrates legacy system analysis"
 ```
 
-`display_name` em Title Case. `short_description` curta — nos exemplos do mattpocock, 25 a 45 caracteres.
-Pode derivar da primeira oração da `description`, mas **revise à mão**: as do Reversa começam com frases
-longas que não cabem bem aqui.
+`display_name` in Title Case. `short_description` short — in mattpocock's examples, 25 to 45 characters. You can derive from the first sentence of the `description`, but **review manually**: Reversa's start with long phrases that do not fit well here.
 
 ```bash
-git commit -am "etapa 5: agents/openai.yaml nas 49 skills, marcas em lockstep"
+git commit -am "step 5: agents/openai.yaml in 49 skills, marks in lockstep"
 ```
 
 ---
 
-### 4.6 · Etapa 6 — reescrever as `description` das user-invoked
+### 4.6 - Step 6 — rewrite the `description` of user-invoked skills
 
-⚠️ **Isto não é cosmético e não é opcional.** É metade de uma das duas características pedidas.
+Warning: **This is not cosmetic and not optional.** It is half of one of the two requested characteristics.
 
-A política do mattpocock (`.agents/invocation.md`) define que o **conteúdo** da `description` muda
-conforme o lado do eixo:
+mattpocock's policy (`.agents/invocation.md`) defines that the **content** of the `description` changes according to which side of the axis:
 
-> - **User-invoked** — a `description` é **human-facing**: um resumo de uma linha lido por uma pessoa
->   navegando os slash-commands. **Strip trigger lists** (*"Use when the user says…"*).
-> - **Model-invoked** — a `description` é **model-facing** e mantém o fraseado rico de gatilhos
->   (*"Use when the user wants…, mentions…, asks for…"*) para que a auto-invocação dispare.
+> - **User-invoked** — the `description` is **human-facing**: a one-line summary read by a person browsing the slash-commands. **Strip trigger lists** (*"Use when the user says..."*).
+> - **Model-invoked** — the `description` is **model-facing** and keeps the rich trigger phrasing (*"Use when the user wants..., mentions..., asks for..."*) so that auto-invocation fires.
 
-As `description` do Reversa têm média de **300 chars** porque estão cheias de gatilhos de modelo:
-*"Use quando o usuário digitar /X, 'fazer Y' ou 'iniciar Z'"*. Numa skill user-invoked esses gatilhos
-não servem para nada — ninguém os lê, o modelo não vê mais a skill, e o humano lê ruído.
+Reversa's `description` fields average **300 chars** because they are full of model triggers: *"Use when the user types /X, 'do Y' or 'start Z'"*. In a user-invoked skill these triggers serve no purpose — nobody reads them, the model no longer sees the skill, and the human reads noise.
 
-Referência das user-invoked do mattpocock: ~50 chars
-(`"A relentless interview to sharpen a plan or design."`).
+Reference from mattpocock's user-invoked: ~50 chars (`"A relentless interview to sharpen a plan or design."`).
 
-**Regra:** nas 41 user-invoked, reduza a `description` a um resumo humano de uma linha, sem gatilhos.
-Nas 8 model-invoked, **não mexa** — lá os gatilhos são o mecanismo.
+**Rule:** in the 41 user-invoked, reduce the `description` to a human one-line summary, without triggers. In the 8 model-invoked, **do not touch** — there the triggers are the mechanism.
 
-O verificador da Etapa 7 reprova `description` de user-invoked que ainda contenha `Use quando`,
-`Use when` ou `digitar "/`.
+The Step 7 verifier rejects a user-invoked `description` that still contains `Use quando`, `Use when`, or `digitar "/`.
 
 ```bash
-git commit -am "etapa 6: description das user-invoked reescrita como resumo humano"
+git commit -am "step 6: user-invoked description rewritten as human summary"
 ```
 
-### 4.7 · Etapa 7 — o verificador (é aqui que o Reversa supera o mattpocock)
+### 4.7 - Step 7 — the verifier (this is where Reversa surpasses mattpocock)
 
-**Esta etapa é o que transforma as duas mudanças em características permanentes.**
+**This step is what transforms the two changes into permanent characteristics.**
 
-Sem ela, o Reversa fica com o *estado* certo hoje e volta a derivar na próxima skill que alguém
-adicionar. Com ela, o eixo de invocação vira invariante executável.
+Without it, Reversa has the right *state* today and drifts again on the next skill someone adds. With it, the invocation axis becomes an executable invariant.
 
-🔴 **O mattpocock não tem isso, e paga o preço.** Ele declara 12 invariantes estruturais e **não
-verifica nenhuma** — o único CI é o de release. Duas estão quebradas neste momento, e ambas são
-exatamente do tipo que uma verificação de trinta linhas pegaria. **Copie a declaração, não a ausência
-de executor.**
+**mattpocock does not have this, and pays the price.** He declares 12 structural invariants and **verifies none** — the only CI is the release CI. Two are broken right now, and both are exactly the type a thirty-line check would catch. **Copy the declaration, not the absence of executor.**
 
-Prova de que o verificador faz trabalho real: rodado contra as 41 skills do mattpocock, ele confirma
-**0 descasamentos** — e ainda assim encontra **2 desvios** de higiene de `description` que a política
-deles prescreve e ninguém aplicou (`personal/edit-article`, `deprecated/ubiquitous-language`, ambas em
-buckets não promovidos).
+Proof that the verifier does real work: run against mattpocock's 41 skills, it confirms **0 mismatches** — and still finds **2 deviations** of `description` hygiene that their policy prescribes and nobody applied (`personal/edit-article`, `deprecated/ubiquitous-language`, both in non-promoted buckets).
 
-**O script já existe e está validado:** `/workspaces/CHUPA-CABRA/verify-invocation.py`
+**The script already exists and is validated:** `/workspaces/CHUPA-CABRA/verify-invocation.py`
 
-Ele checa cinco coisas:
+It checks five things:
 
-| # | Checagem |
+| # | Check |
 |---|---|
-| 1 | Toda skill tem `agents/openai.yaml` |
-| 2 | `openai.yaml` tem `interface.display_name` e `interface.short_description` |
-| 3 | **Lockstep:** `disable-model-invocation: true` ⟺ `allow_implicit_invocation: false` — user-invoked nas duas marcas ou em nenhuma |
-| 4 | `description` de user-invoked não contém gatilho de modelo |
-| 5 | As duas árvores (`.claude/skills`, `.agents/skills`) são idênticas |
+| 1 | Every skill has `agents/openai.yaml` |
+| 2 | `openai.yaml` has `interface.display_name` and `interface.short_description` |
+| 3 | **Lockstep:** `disable-model-invocation: true` iff `allow_implicit_invocation: false` — user-invoked in both marks or in neither |
+| 4 | `description` of user-invoked does not contain model trigger |
+| 5 | The two trees (`.claude/skills`, `.agents/skills`) are identical |
 
-Sai com código **1** se houver qualquer violação, então serve como gate.
+Exits with code **1** if there is any violation, so it serves as a gate.
 
 ```bash
-# estado atual (antes do trabalho): 98 violações, todas por openai.yaml ausente
+# current state (before work): 98 violations, all for missing openai.yaml
 python3 /workspaces/CHUPA-CABRA/verify-invocation.py claude-skills agents-skills
 
-# alvo ao final: RESULTADO ✓ APROVADO
+# target at the end: RESULT: APPROVED
 ```
 
-**Copie o verificador para dentro do Reversa** — ele precisa viajar junto com o framework, não ficar
-solto nesta máquina. Sugestão: `scripts/verify-invocation.py` no repositório-fonte, citado no
-documento da Etapa 8.
+**Copy the verifier into Reversa** — it needs to travel with the framework, not remain loose on this machine. Suggestion: `scripts/verify-invocation.py` in the source repository, referenced in the Step 8 document.
 
 ```bash
-git commit -am "etapa 7: verificador do eixo de invocação, com gate de lockstep"
+git commit -am "step 7: invocation axis verifier, with lockstep gate"
 ```
 
-### 4.8 · Etapa 8 — a política escrita
+### 4.8 - Step 8 — the written policy
 
-A última peça da característica: um documento que declara a regra, para que a próxima skill nasça
-certa em vez de ser corrigida depois.
+The last piece of the characteristic: a document that declares the rule, so the next skill is born correct instead of being fixed later.
 
-O modelo a seguir é `pocoyo-skills/.agents/invocation.md` — **leia-o antes de escrever**. Ele é curto e
-resolve exatamente este problema. Adapte para o Reversa cobrindo:
+The model to follow is `pocoyo-skills/.agents/invocation.md` — **read it before writing**. It is short and solves exactly this problem. Adapt for Reversa covering:
 
-- **O eixo** — toda skill é user-invoked ou model-invoked, sem terceiro estado.
-- **As duas marcas** — `disable-model-invocation: true` (Claude Code) **e**
-  `policy.allow_implicit_invocation: false` (Codex). *"Uma skill é user-invoked nos dois harnesses ou
-  em nenhum."*
-- **O teste de decisão** — *o modelo teria motivo para alcançar esta skill sozinho?* No Reversa a
-  resposta é sim só para os 8 orquestradores de fluxo; os agentes de fase são alcançados pelo
-  orquestrador lendo o `SKILL.md`.
-- **A regra da `description`** — human-facing e curta nas user-invoked; model-facing e com gatilhos nas
-  model-invoked.
-- **A regra de alcance** — uma skill user-invoked não pode ser invocada por outra skill; por isso o
-  orquestrador **lê o `SKILL.md`** em vez de ativar por nome (Etapa 2).
-- **O custo, medido** — registre os números: 14.708 → 2.336 chars, ~3.677 → ~584 tokens. É isto que
-  torna o eixo *"decisão de engenharia com custo medido e assumido"* em vez de convenção tácita.
-- **O executor** — aponte para `verify-invocation.py` e diga quando rodá-lo.
+- **The axis** — every skill is user-invoked or model-invoked, with no third state.
+- **The two marks** — `disable-model-invocation: true` (Claude Code) **and** `policy.allow_implicit_invocation: false` (Codex). *"A skill is user-invoked in both harnesses or in neither."*
+- **The decision test** — *would the model have a reason to reach this skill on its own?* In Reversa the answer is yes only for the 8 flow orchestrators; the phase agents are reached by the orchestrator reading the `SKILL.md`.
+- **The `description` rule** — human-facing and short in user-invoked; model-facing and with triggers in model-invoked.
+- **The reach rule** — a user-invoked skill cannot be invoked by another skill; that is why the orchestrator **reads the `SKILL.md`** instead of activating by name (Step 2).
+- **The cost, measured** — record the numbers: 14,708 to 2,336 chars, ~3,677 to ~584 tokens. This is what makes the axis *"an engineering decision with measured and assumed cost"* instead of a tacit convention.
+- **The executor** — point to `verify-invocation.py` and say when to run it.
 
 ```bash
-git commit -am "etapa 8: política do eixo de invocação, com custo medido e executor"
+git commit -am "step 8: invocation axis policy, with measured cost and executor"
 ```
 
 ---
 
-## §6 · Verificação, definição de "quebrado" e rollback
+## Section 6 - Verification, definition of "broken", and rollback
 
-### 6.1 · O verificador — a checagem principal
+### 6.1 - The verifier — the main check
 
 ```bash
 cd /workspaces/CHUPA-CABRA/reversa-otimizacao
 python3 /workspaces/CHUPA-CABRA/verify-invocation.py claude-skills agents-skills
 ```
 
-**Alvo:** `RESULTADO: ✓ APROVADO` e código de saída 0.
+**Target:** `RESULT: APPROVED` and exit code 0.
 
-Ele cobre lockstep, presença do `openai.yaml`, metadados de UI, higiene de `description` e igualdade
-entre as duas árvores. Para referência, o mesmo script rodado **hoje**, antes do trabalho, reporta
-**98 violações** (49 por árvore, todas por `openai.yaml` ausente) — use isso para confirmar que você
-está medindo a coisa certa.
+It covers lockstep, presence of `openai.yaml`, UI metadata, `description` hygiene, and equality between the two trees. For reference, the same script run **today**, before work, reports **98 violations** (49 per tree, all for missing `openai.yaml`) — use this to confirm you are measuring the right thing.
 
-### 6.2 · Checagens complementares
+### 6.2 - Complementary checks
 
 ```bash
 cd /workspaces/CHUPA-CABRA/reversa-otimizacao
 
-# contagem das marcas  → 41 e 41
+# count of marks  → 41 and 41
 grep -rl "disable-model-invocation: true" claude-skills --include=SKILL.md | wc -l
 find claude-skills -name openai.yaml | xargs grep -l "allow_implicit_invocation: false" | wc -l
 
-# openai.yaml em todas  → 49
+# openai.yaml in all  → 49
 find claude-skills -name openai.yaml | wc -l
 
-# nada do legado foi tocado  → VAZIO
+# nothing from legacy was touched  → EMPTY
 cd /workspaces/CHUPA-CABRA/pocoyo-skills
 find . -newermt "2026-07-30" -type f \
   -not -path "./.claude/*" -not -path "./.agents/skills/*" -not -path "./.git/*"
 ```
 
-### 6.2 · A economia, medida
+### 6.2 - The savings, measured
 
 ```python
 import re, pathlib
@@ -582,129 +494,115 @@ for p in pathlib.Path("claude-skills").rglob("SKILL.md"):
         continue
     d = re.search(r"^description:\s*(.+?)(?=\n\w+:|\Z)", fm, re.S | re.M)
     tot += len(" ".join(d.group(1).split())); n += 1
-print(f"{n} skills · {tot:,} chars · ~{tot//4:,} tokens")
-# ANTES:  49 skills · 14.708 chars · ~3.677 tokens
-# ALVO B:  8 skills ·  2.336 chars ·   ~584 tokens
+print(f"{n} skills - {tot:,} chars - ~{tot//4:,} tokens")
+# BEFORE:  49 skills - 14,708 chars - ~3,677 tokens
+# TARGET B:  8 skills -  2,336 chars -   ~584 tokens
 ```
 
-### 6.3 · Teste funcional — obrigatório, não pule
+### 6.3 - Functional test — mandatory, do not skip
 
-Nenhuma checagem acima prova que o Reversa funciona. Numa sessão nova, depois do `rsync` da §1:
+No check above proves that Reversa works. In a new session, after the `rsync` from section 1:
 
-| # | Teste | Esperado |
+| # | Test | Expected |
 |---|---|---|
-| 1 | Digitar `/reversa` | Orquestrador carrega e lê `.reversa/state.json` |
-| 2 | Escrever só a palavra `reversa` numa mensagem | Ativa (só no Cenário B — é o que A sacrifica) |
-| 3 | `/reversa` chegando ao Scout | Executa via leitura direta (exercita o site 4) |
-| 4 | `/reversa-scout` digitado direto | Funciona |
-| 5 | `/reversa-agents-help` | Catálogo aparece |
-| 6 | `/reversa-forward` | Fluxo carrega |
+| 1 | Type `/reversa` | Orchestrator loads and reads `.reversa/state.json` |
+| 2 | Write just the word `reversa` in a message | Activates (only in Scenario B — this is what A sacrifices) |
+| 3 | `/reversa` reaching the Scout | Executes via direct reading (exercises site 4) |
+| 4 | `/reversa-scout` typed directly | Works |
+| 5 | `/reversa-agents-help` | Catalog appears |
+| 6 | `/reversa-forward` | Flow loads |
 
-### 6.4 · Definição de "quebrado" — qualquer um destes aborta a entrega
+### 6.4 - Definition of "broken" — any of these aborts delivery
 
-- 🔴 O orquestrador não consegue alcançar um agente user-invoked
-- 🔴 Um comando `/reversa-*` que funcionava parou de funcionar
-- 🔴 As duas árvores divergiram
-- 🔴 Qualquer arquivo do legado foi modificado
-- 🔴 O Cenário B foi escolhido e a palavra `reversa` sozinha deixou de ativar
+- The orchestrator cannot reach a user-invoked agent
+- A `/reversa-*` command that worked stopped working
+- The two trees diverged
+- Any legacy file was modified
+- Scenario B was chosen and the word `reversa` alone stopped activating
 
-**Ao encontrar qualquer um: pare, faça rollback (§1), reporte ao usuário.** Não tente consertar por cima.
-
----
-
-## §7 · O que NÃO fazer
-
-- ⛔ **Não crie branch em `pocoyo-skills`.** Não protege nada (Armadilha 1) e o `origin` é repositório
-  de outra pessoa.
-- ⛔ **Não remova a `description`.** O mattpocock mantém as 24; é a flag que corta o custo.
-- ⛔ **Não altere `skills/`, `docs/`, `CLAUDE.md`, `README.md`, `.agents/adr/`, `.agents/invocation.md`,
-  `.agents/writing-docs.md`** — tudo do legado.
-- ⛔ **Não mexa em `_reversa_sdd/` nem em `.reversa/`.**
-- ⛔ **Não confie em `git status` de `pocoyo-skills`** (Armadilha 4).
-- ⛔ **Não aplique só numa das duas árvores.**
-- ⛔ **Não rode `npx reversa update`** durante a tarefa.
-- ⛔ **Não agrupe as 8 etapas num commit só.** O valor está em ter um ponto de retorno por etapa.
-- ⛔ **Não mude comportamento "de brinde".** Se notar outra coisa a melhorar, anote e reporte — não
-  inclua nesta tarefa.
-- 🟡 **Não copie invariante sem executor.** Se for tentador declarar essas regras num documento de
-  governança do Reversa: o mattpocock declara 12 invariantes, não verifica nenhuma, e **duas estão
-  quebradas agora**. Se declarar, declare com um verificador.
+**Upon encountering any of these: stop, rollback (section 1), report to user.** Do not try to fix on top.
 
 ---
 
-## §8 · Fatos de referência
+## Section 7 - What NOT to do
 
-Medidos em 30/07/2026, reproduzíveis.
+- **Do not create a branch in `pocoyo-skills`.** It protects nothing (Pitfall 1) and the `origin` is someone else's repository.
+- **Do not remove the `description`.** mattpocock keeps all 24; it is the flag that cuts the cost.
+- **Do not modify `skills/`, `docs/`, `CLAUDE.md`, `README.md`, `.agents/adr/`, `.agents/invocation.md`, `.agents/writing-docs.md`** — all legacy.
+- **Do not touch `_reversa_sdd/` or `.reversa/`.**
+- **Do not trust `git status` from `pocoyo-skills`** (Pitfall 4).
+- **Do not apply only to one of the two trees.**
+- **Do not run `npx reversa update`** during the task.
+- **Do not group the 8 steps into a single commit.** The value is in having a return point per step.
+- **Do not change behavior "as a bonus".** If you notice something else to improve, note it and report — do not include in this task.
+- **Do not copy an invariant without an executor.** If it is tempting to declare these rules in a Reversa governance document: mattpocock declares 12 invariants, verifies none, and **two are broken right now**. If you declare, declare with a verifier.
 
-| Fato | Valor |
+---
+
+## Section 8 - Reference facts
+
+Measured on 07/30/2026, reproducible.
+
+| Fact | Value |
 |---|---|
-| Skills do Reversa | 49 |
-| Arquivos por árvore | 108 |
-| Árvores independentes | 2 (`.claude/skills`, `.agents/skills`) |
-| Skills com `disable-model-invocation` | **0** |
-| Arquivos `agents/openai.yaml` | **0** |
-| Skills com `/nome` na `description` | 34 |
-| Skills só do orquestrador | 15 |
-| Sites de invocação skill→skill | 4 (+1 indireto) |
-| `description` somadas | 14.708 chars · ~3.677 tokens |
-| Média por `description` | 300 chars |
-| Média de linhas por `SKILL.md` | 133 (vs 69 do mattpocock) |
-| Maior `SKILL.md` | `reversa-new`, 328 linhas |
-| Versão instalada | 1.2.56 |
-| Fonte do Reversa na máquina | **não existe** |
-| Identidade git | `sandeco` / `physialtda@gmail.com` (configurada) |
+| Reversa skills | 49 |
+| Files per tree | 108 |
+| Independent trees | 2 (`.claude/skills`, `.agents/skills`) |
+| Skills with `disable-model-invocation` | **0** |
+| `agents/openai.yaml` files | **0** |
+| Skills with `/name` in `description` | 34 |
+| Orchestrator-only skills | 15 |
+| Skill-to-skill invocation sites | 4 (+1 indirect) |
+| Summed `description` | 14,708 chars - ~3,677 tokens |
+| Average per `description` | 300 chars |
+| Average lines per `SKILL.md` | 133 (vs 69 from mattpocock) |
+| Largest `SKILL.md` | `reversa-new`, 328 lines |
+| Installed version | 1.2.56 |
+| Reversa source on machine | **does not exist** |
+| Git identity | `sandeco` / `physialtda@gmail.com` (configured) |
 
-**Padrão a copiar:** `pocoyo-skills/skills/` (as 41 skills do mattpocock). Bons exemplos de user-invoked:
-`skills/productivity/grill-me/` (7 linhas), `skills/engineering/ask-matt/`, `skills/engineering/wayfinder/`.
-O racional do eixo está em `skills/productivity/writing-great-skills/GLOSSARY.md`, verbetes
-**Model-Invoked**, **User-Invoked**, **Description**, **Context Load**, **Cognitive Load**.
+**Pattern to copy:** `pocoyo-skills/skills/` (mattpocock's 41 skills). Good user-invoked examples: `skills/productivity/grill-me/` (7 lines), `skills/engineering/ask-matt/`, `skills/engineering/wayfinder/`. The axis rationale is in `skills/productivity/writing-great-skills/GLOSSARY.md`, entries **Model-Invoked**, **User-Invoked**, **Description**, **Context Load**, **Cognitive Load**.
 
-**Análise de origem:** `/workspaces/CHUPA-CABRA/relatorio-mattpocock-vs-reversa.pdf` — seção 7, sugestões
-1 e 2. **Veja a correção da §2 antes de seguir o PDF.**
+**Source analysis:** `/workspaces/CHUPA-CABRA/relatorio-mattpocock-vs-reversa.pdf` — section 7, suggestions 1 and 2. **See the section 2 correction before following the PDF.**
 
 ---
 
-## §9 · Ordem de execução
+## Section 9 - Execution order
 
-1. Ler §0 inteira.
-2. **Confirmar com o usuário:** Cenário **A ou B**? (recomendado B) · a otimização sobe para o fonte do
-   Reversa? (Armadilha 5)
-3. Montar o repositório dedicado e o branch (§1).
-4. **Etapa 1** — teste funcional ANTES, registrado (§4.1).
-5. **Etapa 2** — corrigir os 4 sites de invocação. Testar. Commit. (§4.2)
-6. **Etapa 3** — marcar só `reversa-scout`. Testar ponta a ponta. Commit. (§4.3)
-7. **Etapa 4** — marcar as 40 restantes. Conferir 82 (ou 80). Commit. (§4.4)
-8. **Etapa 5** — criar os 98 `openai.yaml`. Commit. (§4.5)
+1. Read section 0 entirely.
+2. **Confirm with the user:** Scenario **A or B**? (recommended B) - does the optimization go upstream to Reversa source? (Pitfall 5)
+3. Set up the dedicated repository and branch (section 1).
+4. **Step 1** — functional test BEFORE, recorded (section 4.1).
+5. **Step 2** — fix the 4 invocation sites. Test. Commit. (section 4.2)
+6. **Step 3** — mark only `reversa-scout`. Test end to end. Commit. (section 4.3)
+7. **Step 4** — mark the remaining 40. Check 82 (or 80). Commit. (section 4.4)
+8. **Step 5** — create the 98 `openai.yaml`. Commit. (section 4.5)
 
-> Até aqui o **estado** está certo. As três etapas seguintes são o que o torna **característica**.
+> Up to here the **state** is correct. The next three steps are what makes it a **characteristic**.
 
-9. **Etapa 6** — reescrever as `description` das 41 user-invoked. Commit. (§4.6)
-10. **Etapa 7** — rodar e embarcar o verificador. Commit. (§4.7)
-11. **Etapa 8** — escrever a política do eixo de invocação. Commit. (§4.8)
-12. Verificador §6.1 → `✓ APROVADO`. Checagens §6.2. Teste funcional §6.3.
-13. `rsync` de volta para `pocoyo-skills` (§1).
-14. Reportar: carga antes/depois, arquivos tocados, testes executados, saída do verificador, e se precisa
-    subir para o fonte.
+9. **Step 6** — rewrite the `description` of the 41 user-invoked. Commit. (section 4.6)
+10. **Step 7** — run and embed the verifier. Commit. (section 4.7)
+11. **Step 8** — write the invocation axis policy. Commit. (section 4.8)
+12. Verifier section 6.1 -> `APPROVED`. Checks section 6.2. Functional test section 6.3.
+13. `rsync` back to `pocoyo-skills` (section 1).
+14. Report: load before/after, files touched, tests executed, verifier output, and whether it needs to go upstream.
 
 ---
 ---
 
-# PARTE 2 — Melhorias estruturais (depois, tarefa separada)
+# PART 2 — Structural improvements (later, separate task)
 
-> ⚠️ **Não misture com a Parte 1.** A Parte 1 é otimização de custo, com risco controlado e rollback por
-> etapa. Estas 5 são melhorias de organização, sem urgência. Faça só **depois** da Parte 1 estar
-> validada e sincronizada. Cada uma é um branch próprio.
+> Warning: **Do not mix with Part 1.** Part 1 is cost optimization, with controlled risk and rollback per step. These 5 are organization improvements, without urgency. Do them only **after** Part 1 is validated and synchronized. Each one is its own branch.
 >
-> Aprovadas pelo usuário em 30/07/2026.
+> Approved by the user on 07/30/2026.
 
-## M1 · Podar as skills grandes
+## M1 - Prune the large skills
 
-`SKILL.md` do Reversa tem **133 linhas em média**, contra 69 do mattpocock. Texto longo demais o modelo
-lê pior — a parte do meio é a que ele mais ignora.
+Reversa's `SKILL.md` averages **133 lines**, versus 69 from mattpocock. Text that is too long the model reads poorly — the middle part is what it ignores most.
 
-As 8 maiores:
+The 8 largest:
 
-| Skill | Linhas |
+| Skill | Lines |
 |---|---:|
 | `reversa-new` | 328 |
 | `reversa-screen-translator` | 278 |
@@ -715,62 +613,45 @@ As 8 maiores:
 | `reversa-requirements` | 216 |
 | `reversa-designer` | 216 |
 
-**O que fazer:** mover blocos de referência (formatos, exemplos, tabelas longas) para
-`<skill>/references/`, deixando no `SKILL.md` só o fluxo e um ponteiro em prosa. O Reversa **já faz
-isso** em 17 skills — é aplicar o padrão da casa nas que ficaram para trás.
+**What to do:** move reference blocks (formats, examples, long tables) to `<skill>/references/`, leaving only the flow and a prose pointer in `SKILL.md`. Reversa **already does this** in 17 skills — it is applying the house pattern to those that were left behind.
 
-⚠️ Só o `SKILL.md` de skill **model-invoked** custa contexto permanente. Nas user-invoked a poda é por
-qualidade de leitura, não por token.
+Warning: Only the `SKILL.md` of **model-invoked** skills costs permanent context. In user-invoked, the pruning is for reading quality, not for tokens.
 
-## M2 · Buckets por maturidade
+## M2 - Maturity buckets
 
-Os 49 agentes estão todos no mesmo nível, todos implicitamente prontos. Não há onde colocar um rascunho
-nem um aposentado.
+The 49 agents are all at the same level, all implicitly ready. There is nowhere to put a draft or a retired one.
 
-**O que fazer:** separar em pastas por maturidade, e instalar só a principal. Modelo do mattpocock:
-`engineering/` + `productivity/` (vão), `in-progress/` (rascunho, não vai), `deprecated/` (aposentado,
-guardado como histórico, não vai).
+**What to do:** separate into folders by maturity, and install only the main one. mattpocock's model: `engineering/` + `productivity/` (go), `in-progress/` (draft, does not go), `deprecated/` (retired, kept as history, does not go).
 
-Ganho: dá para escrever um agente novo dentro do repositório sem que ele chegue ao usuário, e aposentar
-um sem apagar o histórico dele.
+Gain: you can write a new agent inside the repository without it reaching the user, and retire one without deleting its history.
 
-## M3 · Registrar as recusas
+## M3 - Record the refusals
 
-Uma pasta com o que o projeto decidiu **não** fazer, com o argumento e o pedido que originou a discussão.
-O mattpocock tem 3 documentos em `.out-of-scope/`.
+A folder with what the project decided **not** to do, with the argument and the request that originated the discussion. mattpocock has 3 documents in `.out-of-scope/`.
 
-Evita rediscutir o mesmo pedido a cada trimestre, e permite responder com uma página em vez de uma
-conversa. O valor não está na recusa, está no argumento preservado.
+Prevents re-discussing the same request every quarter, and allows responding with a page instead of a conversation. The value is not in the refusal, it is in the preserved argument.
 
-## M4 · Glossário do vocabulário do Reversa
+## M4 - Reversa vocabulary glossary
 
-Termos próprios — **unit, spec, lacuna, fase, checkpoint, doc_level, granularity, agente independente,
-escala de confiança** — hoje vivem espalhados entre o `SKILL.md` do orquestrador, os `references/` e o
-`config.toml`.
+Proprietary terms — **unit, spec, gap, phase, checkpoint, doc_level, granularity, independent agent, confidence scale** — today live scattered between the orchestrator's `SKILL.md`, the `references/`, and the `config.toml`.
 
-Com 49 agentes escritos ao longo do tempo, é o que impede dois deles de usarem palavras diferentes para a
-mesma coisa.
+With 49 agents written over time, it is what prevents two of them from using different words for the same thing.
 
-**Modelo:** `pocoyo-skills/skills/productivity/writing-great-skills/GLOSSARY.md` — definição opinativa e
-uma linha `_Avoid_:` com os termos rejeitados.
+**Model:** `pocoyo-skills/skills/productivity/writing-great-skills/GLOSSARY.md` — opinionated definition and an `_Avoid_:` line with rejected terms.
 
-## M5 · Invariantes declaradas — com verificador
+## M5 - Declared invariants — with verifier
 
-Invariante é uma regra de "essas coisas têm que estar sempre de acordo". O Reversa já tem várias,
-implícitas. As conhecidas:
+An invariant is a rule of "these things must always be in agreement". Reversa already has several, implicit. The known ones:
 
-| # | Invariante | Estado em 30/07/2026 |
+| # | Invariant | State on 07/30/2026 |
 |---|---|---|
-| 1 | Todo agente em `config.toml [agents] installed` tem pasta em `.claude/skills/` | 🟢 íntegra (49 = 49) |
-| 2 | `.claude/skills/` e `.agents/skills/` são idênticas | 🟢 íntegra |
-| 3 | Toda skill tem as duas marcas de invocação em lockstep | 🔴 quebrada — é a Parte 1 |
-| 4 | `.reversa/version` bate com a versão do pacote npm | não verificada |
+| 1 | Every agent in `config.toml [agents] installed` has a folder in `.claude/skills/` | Intact (49 = 49) |
+| 2 | `.claude/skills/` and `.agents/skills/` are identical | Intact |
+| 3 | Every skill has both invocation marks in lockstep | Broken — this is Part 1 |
+| 4 | `.reversa/version` matches the npm package version | Not verified |
 
-🔴 **A regra que governa esta melhoria:** declare **só** o que você for verificar por script.
+**The rule governing this improvement:** declare **only** what you will verify by script.
 
-O mattpocock declarou 12 invariantes e não checa nenhuma. Duas estão quebradas agora — e uma delas viola
-uma regra que ele mesmo publicou num ADR (*"bump both together on release"*). Lista sem executor é
-decoração que envelhece em silêncio.
+mattpocock declared 12 invariants and checks none. Two are broken right now — and one of them violates a rule he himself published in an ADR (*"bump both together on release"*). A list without an executor is decoration that ages silently.
 
-O `verify-invocation.py` já cobre a nº 2 e a nº 3. Estenda-o para as outras, em vez de criar um documento
-novo sem script.
+The `verify-invocation.py` already covers #2 and #3. Extend it to the others, instead of creating a new document without a script.
