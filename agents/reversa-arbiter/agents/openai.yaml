@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Arbiter"
-  short_description: "Agente Arbiter do Ideation Team, converge com trade-off explícito"
+  short_description: "Arbiter agent of the Ideation Team, converges with explicit trade-off"
 policy:
   allow_implicit_invocation: false

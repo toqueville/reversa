@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Detective"
-  short_description: "Extrai conhecimento de negócio implícito do projeto legado —…"
+  short_description: "Extracts implicit business knowledge from the legacy project —…"
 policy:
   allow_implicit_invocation: false

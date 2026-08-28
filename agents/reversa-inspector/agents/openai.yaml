@@ -1,5 +1,5 @@
 interface:
   display_name: "Reversa Inspector"
-  short_description: "Quinto agente do Time de Migração"
+  short_description: "Fifth agent of the Migration Team"
 policy:
   allow_implicit_invocation: false
