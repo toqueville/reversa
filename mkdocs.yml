@@ -1,6 +1,6 @@
 site_name: Reversa
 site_url: https://sandeco.github.io/reversa
-site_description: Transforme sistemas legados em especificações executáveis por agentes de IA.
+site_description: Transform legacy systems into executable specifications for AI agents.
 site_author: sandeco
 repo_url: https://github.com/sandeco/reversa
 repo_name: sandeco/reversa
@@ -9,20 +9,20 @@ copyright: '"Reversa" by sandeco'
 
 theme:
   name: material
-  language: pt-BR
+  language: en
   palette:
     - scheme: slate
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-4
-        name: Mudar para modo claro
+        name: Switch to light mode
     - scheme: default
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-7
-        name: Mudar para modo escuro
+        name: Switch to dark mode
   features:
     - navigation.sections
     - navigation.top

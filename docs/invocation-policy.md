@@ -1,83 +1,83 @@
-# Política do eixo de invocação
+# Invocation axis policy
 
-> Regra que governa como cada skill do Reversa é alcançada — pelo humano ou pelo modelo.
-> Verificada por `scripts/verify-invocation.py` (gate de CI). Escreva a próxima skill já conforme.
+> Rule that governs how each Reversa skill is reached — by the human or by the model.
+> Verified by `scripts/verify-invocation.py` (CI gate). Write the next skill already compliant.
 
-## O eixo
+## The axis
 
-Toda skill é **user-invoked** ou **model-invoked** — não há terceiro estado.
+Every skill is **user-invoked** or **model-invoked** — there is no third state.
 
-- **Model-invoked** — o modelo pode alcançá-la sozinho, reconhecendo a intenção do usuário em
-  linguagem natural. Para isso, a `description` fica **permanentemente carregada no contexto de toda
-  requisição**. Custa contexto mesmo quando a skill não é usada.
-- **User-invoked** — só é alcançada quando o humano digita `/nome`, ou quando um orquestrador lê o seu
-  `SKILL.md`. Não é carregada no contexto do modelo. Marcada com `disable-model-invocation: true`.
+- **Model-invoked** — the model can reach it on its own, recognizing the user's intent in
+  natural language. For this, the `description` is **permanently loaded in the context of every
+  request**. It costs context even when the skill is not used.
+- **User-invoked** — only reached when the human types `/name`, or when an orchestrator reads its
+  `SKILL.md`. It is not loaded into the model's context. Marked with `disable-model-invocation: true`.
 
-## O teste de decisão
+## The decision test
 
-> *O modelo teria motivo para alcançar esta skill sozinho, a partir de uma frase em linguagem natural,
-> sem o usuário digitar o comando?*
+> *Would the model have a reason to reach this skill on its own, from a natural language sentence,
+> without the user typing the command?*
 
-No Reversa a resposta é **sim apenas para os 9 pontos de entrada de fluxo**: os 8 orquestradores
-(`role: orchestrator`) mais `reversa-agents-help`. Todos os agentes de fase — Scout, Architect,
-Reviewer, os `pricing-*`, os `debugger-*`, os `docs-*`, os especialistas de refactor e os
-renderizadores — são alcançados pelo **orquestrador lendo o `SKILL.md`**, nunca pelo modelo adivinhando.
-Logo, são user-invoked.
+In Reversa, the answer is **yes only for the 9 flow entry points**: the 8 orchestrators
+(`role: orchestrator`) plus `reversa-agents-help`. All phase agents — Scout, Architect,
+Reviewer, the `pricing-*`, the `debugger-*`, the `docs-*`, the refactor specialists and the
+renderers — are reached by the **orchestrator reading their `SKILL.md`**, never by the model guessing.
+Therefore, they are user-invoked.
 
-**As 9 model-invoked:** `reversa`, `reversa-new`, `reversa-forward`, `reversa-migrate`,
+**The 9 model-invoked:** `reversa`, `reversa-new`, `reversa-forward`, `reversa-migrate`,
 `reversa-autonomous`, `reversa-refactor`, `reversa-debugger`, `reversa-docs`, `reversa-agents-help`.
 
-## As duas marcas, em lockstep
+## The two marks, in lockstep
 
-Uma skill é user-invoked **nos dois harnesses ou em nenhum**:
+A skill is user-invoked **in both harnesses or in neither**:
 
-| Estado | Claude Code (`SKILL.md`) | Codex (`agents/openai.yaml`) |
+| State | Claude Code (`SKILL.md`) | Codex (`agents/openai.yaml`) |
 | --- | --- | --- |
-| Model-invoked | ausência da flag | só o bloco `interface:` |
+| Model-invoked | absence of the flag | only the `interface:` block |
 | User-invoked | `disable-model-invocation: true` | `interface:` **+** `policy.allow_implicit_invocation: false` |
 
-O verificador reprova qualquer descasamento entre as duas marcas.
+The verifier rejects any mismatch between the two marks.
 
-## A regra de alcance
+## The reachability rule
 
-Uma skill user-invoked **não pode ser invocada por outra skill pelo nome** — sem `description`, o
-modelo não a vê. Por isso o orquestrador **lê o `SKILL.md`** do sub-agente (pasta irmã, no mesmo
-diretório de skills) e executa as instruções no contexto atual, em vez de ativar por nome. Ao escrever
-um orquestrador novo, use sempre esse padrão de leitura.
+A user-invoked skill **cannot be invoked by another skill by name** — without a `description`, the
+model cannot see it. That is why the orchestrator **reads the `SKILL.md`** of the sub-agent (sibling
+folder, in the same skills directory) and executes the instructions in the current context, instead of
+activating by name. When writing a new orchestrator, always use this read pattern.
 
-## A regra da `description`
+## The `description` rule
 
-- **User-invoked** — human-facing: um resumo do que a skill faz, mais dicas de uso em prosa
-  (*"Use quando \<condição\>"*, *"Ativação: /x (invocado por /y)"*, fase do ciclo). **Sem listas de
-  gatilho de modelo** — nada de `Use com "/x", "frase"`, `digitar "..."`, `Ative com /x, ...`,
-  `pedir "..."`. Elas não servem a ninguém (o humano lê ruído; o modelo não vê mais a skill).
-- **Model-invoked** — model-facing: mantém o fraseado rico de gatilhos, porque é o que dispara a
-  auto-invocação. **Não mexa nelas.**
+- **User-invoked** — human-facing: a summary of what the skill does, plus usage hints in prose
+  (*"Use when \<condition\>"*, *"Activation: /x (invoked by /y)"*, cycle phase). **No model trigger
+  lists** — nothing like `Use with "/x", "phrase"`, `type "..."`, `Activate with /x, ...`,
+  `ask "..."`. They serve no one (the human reads noise; the model no longer sees the skill).
+- **Model-invoked** — model-facing: keeps the trigger-rich phrasing, because that is what fires
+  auto-invocation. **Do not touch them.**
 
-## O custo, medido (31/07/2026, v1.2.57)
+## The cost, measured (07/31/2026, v1.2.57)
 
-A carga permanente de contexto das `description` model-invoked:
+The permanent context load from model-invoked `description`s:
 
-| | Skills model-invoked | Chars | Tokens |
+| | Model-invoked skills | Chars | Tokens |
 | --- | ---: | ---: | ---: |
-| Antes (todas) | 65 | 19.948 | ~4.987 |
-| Depois (Cenário B) | 9 | 2.336 | ~668 |
-| | | | **−4.319 tokens (−86%)** |
+| Before (all) | 65 | 19,948 | ~4,987 |
+| After (Scenario B) | 9 | 2,336 | ~668 |
+| | | | **−4,319 tokens (−86%)** |
 
-É isto que torna o eixo *"decisão de engenharia com custo medido e assumido"* — não convenção tácita.
-A economia é de janela de contexto e de precisão de roteamento (o modelo escolhe entre 9 descrições, não
-65). Em tokens de fatura, o ganho é parcialmente mitigado por prompt caching — não prometa economia
-proporcional na conta.
+This is what makes the axis an *"engineering decision with measured and assumed cost"* — not a tacit
+convention. The savings come from context window and routing precision (the model chooses among 9
+descriptions, not 65). In billing tokens, the gain is partially mitigated by prompt caching — do not
+promise proportional savings on the bill.
 
-## O executor
+## The executor
 
 ```bash
 npm run verify
-# ou, separadamente:
-python3 scripts/verify-invocation.py            # eixo, lockstep, higiene de description
-node   scripts/test-installer-transport.mjs     # marcas atravessam a cópia do installer
+# or, separately:
+python3 scripts/verify-invocation.py            # axis, lockstep, description hygiene
+node   scripts/test-installer-transport.mjs     # marks survive the installer copy
 ```
 
-Roda automaticamente no CI (`.github/workflows/verify-invocation.yml`) a cada mudança em `agents/`.
-Sai com código 1 em qualquer violação. **Ao adicionar uma skill, rode `npm run verify` antes de
-commitar** — é o que impede o eixo de derivar na próxima skill.
+Runs automatically in CI (`.github/workflows/verify-invocation.yml`) on every change to `agents/`.
+Exits with code 1 on any violation. **When adding a skill, run `npm run verify` before
+committing** — this is what prevents the axis from drifting with the next skill.

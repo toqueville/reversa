@@ -53,7 +53,7 @@ Turns the raw audience from `ideation.md` into one to three structured personas 
 
 **Command:** `/reversa-drafter`
 
-Synthesizes ideation and personas into a complete PRD: problem, success metrics, scope, non-goals, constraints, risks, open questions. Works as a synthesizer, not an interviewer: extracts everything it can from the two sources and asks at most two coverage questions to fill the most critical gaps. Anything that remains undefined is marked `🟡 [INDEFINIDO, validar com usuário]`.
+Synthesizes ideation and personas into a complete PRD: problem, success metrics, scope, non-goals, constraints, risks, open questions. Works as a synthesizer, not an interviewer: extracts everything it can from the two sources and asks at most two coverage questions to fill the most critical gaps. Anything that remains undefined is marked `🟡 [UNDEFINED, validate with user]`.
 
 **Produces:** `_reversa_sdd/prd.md`.
 
