@@ -1,9 +1,9 @@
 /*
- * Reversa Documentation - Helper de navegação
+ * Reversa Documentation - Navigation helper
  *
- * Marca o link da página atual como ativo,
- * permite alternância de tema via botão no header,
- * persiste a escolha em localStorage.
+ * Marks the current page link as active,
+ * allows theme toggling via header button,
+ * persists the choice in localStorage.
  */
 
 (function () {
@@ -13,16 +13,16 @@
     const VALID_STYLES = ["sober", "premium", "dense", "exploratory"];
 
     /**
-     * Popula o <nav> com links lidos de window.RV_DATA.nav.
-     * Se o Publisher já preencheu via NAV_LINKS server-side, mantém.
-     * Se o nav está vazio (caso de regeneração parcial), preenche aqui.
-     * Fonte única de verdade: window.RV_DATA.nav (gerado a partir de
-     * pagesGenerated no .state.json pelo Publisher).
+     * Populates the <nav> with links read from window.RV_DATA.nav.
+     * If the Publisher already filled via NAV_LINKS server-side, keeps it.
+     * If the nav is empty (partial regeneration case), fills here.
+     * Single source of truth: window.RV_DATA.nav (generated from
+     * pagesGenerated in .state.json by the Publisher).
      */
     function renderNav() {
         const nav = document.querySelector(".reversa-doc-nav");
         if (!nav) return;
-        // Se nav já tem <a>, respeita server-side render.
+        // If nav already has <a>, respects server-side render.
         if (nav.querySelector("a")) return;
         if (!window.RV_DATA || !Array.isArray(window.RV_DATA.nav)) return;
         const html = window.RV_DATA.nav
@@ -34,7 +34,7 @@
     }
 
     /**
-     * Marca o link de navegação que aponta para a página atual.
+     * Marks the navigation link that points to the current page.
      */
     function highlightActiveLink() {
         const currentPath = window.location.pathname.split("/").pop() || "index.html";
@@ -49,7 +49,7 @@
     }
 
     /**
-     * Cicla entre as 4 variantes de tema na ordem definida.
+     * Cycles through the 4 theme variants in defined order.
      */
     function cycleTheme() {
         const body = document.body;
@@ -66,7 +66,7 @@
         try {
             localStorage.setItem(STORAGE_KEY_THEME, style);
         } catch (e) {
-            /* localStorage indisponível, ignora */
+            /* localStorage unavailable, ignore */
         }
         updateThemeButtonLabel(style);
     }
@@ -79,7 +79,7 @@
                 return;
             }
         } catch (e) {
-            /* ignora */
+            /* ignore */
         }
         const initial = document.body.getAttribute("data-style") || "sober";
         updateThemeButtonLabel(initial);
@@ -101,9 +101,9 @@
     }
 
     /**
-     * Adiciona suporte a navegação por teclas:
-     * j/k para avançar/voltar entre seções do conteúdo,
-     * Esc para fechar modais (futuro).
+     * Adds keyboard navigation support:
+     * j/k to advance/go back between content sections,
+     * Esc to close modals (future).
      */
     function attachKeyboardNav() {
         document.addEventListener("keydown", (e) => {

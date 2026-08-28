@@ -1,20 +1,20 @@
 /*
- * Reversa Documentation - Estilo Unificado
+ * Reversa Documentation - Unified Style
  *
- * Chassis visual compartilhado entre o /reversa-documentation
- * e os HTMLs auxiliares dos demais agentes do core.
+ * Shared visual chassis between /reversa-documentation
+ * and the auxiliary HTMLs of the other core agents.
  *
- * Quatro variantes ativadas via atributo data-style no <body>:
- *   - sober:       cores neutras, alta legibilidade textual
- *   - premium:     dark mode cinematográfico, dourado, espaçamento generoso
- *   - dense:       paleta saturada, grid de cards, alta densidade
- *   - exploratory: pastéis luminosos sobre fundo escuro, foco em 3D
+ * Four variants activated via data-style attribute on <body>:
+ *   - sober:       neutral colors, high text readability
+ *   - premium:     cinematic dark mode, gold, generous spacing
+ *   - dense:       saturated palette, card grid, high density
+ *   - exploratory: luminous pastels on dark background, 3D focus
  *
- * Tudo em variáveis CSS para permitir override por agente sem reescrever.
+ * All in CSS variables to allow per-agent override without rewriting.
  */
 
 /* ============================================================
-   1. Reset minimalista
+   1. Minimal reset
    ============================================================ */
 
 *, *::before, *::after {
@@ -115,7 +115,7 @@ code { padding: 0.1em 0.4em; }
 pre  { padding: var(--reversa-space-md); overflow-x: auto; }
 
 /* ============================================================
-   2. Layout geral
+   2. General layout
    ============================================================ */
 
 .reversa-doc-header {
@@ -228,7 +228,7 @@ pre  { padding: var(--reversa-space-md); overflow-x: auto; }
 
 .reversa-doc-footer-sep { opacity: 0.4; }
 
-/* Responsividade básica: sidebar vira drawer abaixo de 900px */
+/* Basic responsiveness: sidebar becomes drawer below 900px */
 @media (max-width: 900px) {
     body {
         grid-template-columns: 1fr;
@@ -247,7 +247,7 @@ pre  { padding: var(--reversa-space-md); overflow-x: auto; }
 }
 
 /* ============================================================
-   3. Componentes utilitários
+   3. Utility components
    ============================================================ */
 
 .reversa-card {
@@ -294,7 +294,7 @@ pre  { padding: var(--reversa-space-md); overflow-x: auto; }
 }
 
 /* ============================================================
-   4. Variante: sober
+   4. Variant: sober
    ============================================================ */
 
 :root,
@@ -336,7 +336,7 @@ body[data-style="sober"] {
 }
 
 /* ============================================================
-   5. Variante: premium (dark cinematográfico)
+   5. Variant: premium (cinematic dark)
    ============================================================ */
 
 body[data-style="premium"] {
@@ -375,7 +375,7 @@ body[data-style="premium"] .reversa-card {
 }
 
 /* ============================================================
-   6. Variante: dense (grid de cards, saturado)
+   6. Variant: dense (card grid, saturated)
    ============================================================ */
 
 body[data-style="dense"] {
@@ -413,7 +413,7 @@ body[data-style="dense"] .reversa-grid {
 }
 
 /* ============================================================
-   7. Variante: exploratory (3D-friendly)
+   7. Variant: exploratory (3D-friendly)
    ============================================================ */
 
 body[data-style="exploratory"] {
@@ -447,7 +447,7 @@ body[data-style="exploratory"] .reversa-doc-sidebar {
 }
 
 /* ============================================================
-   8. Acessibilidade
+   8. Accessibility
    ============================================================ */
 
 *:focus-visible {

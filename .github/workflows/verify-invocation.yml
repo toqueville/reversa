@@ -1,9 +1,9 @@
 name: Verify invocation axis
 
-# Gate executável do eixo de invocação (ver docs/invocation-policy.md).
-# Garante que toda skill é user-invoked ou model-invoked com as duas marcas em
-# lockstep, que todo agents/openai.yaml existe, que as descrições user-invoked
-# não têm gatilho de modelo, e que as marcas atravessam a cópia do installer.
+# Executable gate for the invocation axis (see docs/invocation-policy.md).
+# Ensures every skill is user-invoked or model-invoked with both marks in
+# lockstep, that every agents/openai.yaml exists, that user-invoked descriptions
+# have no model trigger, and that the marks survive the installer copy.
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Verificar eixo de invocação
+      - name: Verify invocation axis
         run: python3 scripts/verify-invocation.py
-      - name: Smoke test de transporte do installer
+      - name: Installer transport smoke test
         run: node scripts/test-installer-transport.mjs

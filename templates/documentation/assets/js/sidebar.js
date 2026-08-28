@@ -1,12 +1,12 @@
 /*
- * Reversa Documentation - Helper de sidebar reativa
+ * Reversa Documentation - Reactive sidebar helper
  *
- * Cada controle dentro da sidebar declara um data-param.
- * Mudanças disparam o evento "reversa:param-change" para
- * a página específica reagir, e persistem em localStorage.
+ * Each control within the sidebar declares a data-param.
+ * Changes fire the "reversa:param-change" event for
+ * the specific page to react to, and persist in localStorage.
  *
- * Botão "Reset" restaura defaults declarados em data-default.
- * Botão "Download PNG" captura o canvas principal da viewport.
+ * "Reset" button restores defaults declared in data-default.
+ * "Download PNG" button captures the main canvas from the viewport.
  */
 
 (function () {
@@ -15,7 +15,7 @@
     const STORAGE_PREFIX = "reversa.sidebar.";
 
     /**
-     * Inicializa todos os controles da sidebar atual.
+     * Initializes all controls of the current sidebar.
      */
     function init() {
         const sidebar = document.querySelector(".reversa-doc-sidebar");
@@ -72,7 +72,7 @@
             writeControlValue(control, parsed);
             dispatchChange(param, parsed, control);
         } catch (e) {
-            /* dados corrompidos, ignora silencioso */
+            /* corrupted data, silently ignore */
         }
     }
 
@@ -81,7 +81,7 @@
             const key = STORAGE_PREFIX + pageId + "." + param;
             localStorage.setItem(key, JSON.stringify(value));
         } catch (e) {
-            /* ignora se localStorage indisponível */
+            /* ignore if localStorage unavailable */
         }
     }
 
@@ -117,12 +117,12 @@
         btn.addEventListener("click", () => {
             const canvas = document.querySelector("canvas");
             if (!canvas) {
-                showToast("Nenhum canvas para exportar nesta página.");
+                showToast("No canvas to export on this page.");
                 return;
             }
             canvas.toBlob((blob) => {
                 if (!blob) {
-                    showToast("Falha ao gerar PNG.");
+                    showToast("Failed to generate PNG.");
                     return;
                 }
                 const url = URL.createObjectURL(blob);
